@@ -72,12 +72,12 @@ def handle_save_file(params):
 
 
 def handle_get_garment_info(params):
-    tmp = os.path.join(os.environ.get("TEMP", "."), "clo_garment_info.json")
-    export_api.ExportGarmentInformation(tmp)
-    if os.path.exists(tmp):
-        with open(tmp, "r") as f:
-            data = json.load(f)
-        os.remove(tmp)
+    info_str = export_api.ExportGarmentInformationToStream()
+    if info_str:
+        try:
+            data = json.loads(info_str)
+        except (json.JSONDecodeError, TypeError):
+            data = {"raw": str(info_str)}
         return {"garment_info": data}
     return {"garment_info": None}
 
@@ -139,8 +139,9 @@ def handle_delete_pattern(params):
 def handle_flip_pattern(params):
     index = params["pattern_index"]
     horizontal = params.get("horizontal", True)
-    pattern_api.FlipPatternPiece(index, horizontal)
-    return {"flipped": True, "index": index, "horizontal": horizontal}
+    each = params.get("each", True)
+    pattern_api.FlipPatternPiece(index, horizontal, each)
+    return {"flipped": True, "index": index, "horizontal": horizontal, "each": each}
 
 
 def handle_create_pattern(params):
@@ -180,13 +181,6 @@ def handle_add_fabric(params):
     return {"added": True, "fabric_index": index, "file_path": file_path}
 
 
-def handle_replace_fabric(params):
-    fabric_index = params["fabric_index"]
-    file_path = params["file_path"]
-    result = fabric_api.ReplaceFabric(fabric_index, file_path)
-    return {"replaced": result, "fabric_index": fabric_index}
-
-
 def handle_assign_fabric(params):
     fabric_index = params["fabric_index"]
     pattern_index = params["pattern_index"]
@@ -200,8 +194,15 @@ def handle_set_fabric_color(params):
     r = params.get("r", 255)
     g = params.get("g", 255)
     b = params.get("b", 255)
-    fabric_api.SetFabricPBRMaterialBaseColor(fabric_index, r, g, b)
-    return {"set": True, "fabric_index": fabric_index, "color": [r, g, b]}
+    a = params.get("a", 255)
+    material_face = params.get("material_face", 0)
+    # Convert 0-255 int range to 0.0-1.0 float range
+    r_f = r / 255.0
+    g_f = g / 255.0
+    b_f = b / 255.0
+    a_f = a / 255.0
+    fabric_api.SetFabricPBRMaterialBaseColor(fabric_index, material_face, r_f, g_f, b_f, a_f)
+    return {"set": True, "fabric_index": fabric_index, "color": [r, g, b, a]}
 
 
 def handle_get_fabric_for_pattern(params):
@@ -229,48 +230,49 @@ def handle_export_obj(params):
         result = export_api.ExportOBJ(file_path, opt)
     else:
         result = export_api.ExportOBJ(file_path)
-    return {"exported": bool(result), "file_path": result or file_path, "format": "obj"}
+    # ExportOBJ returns list[str], not str
+    if isinstance(result, list):
+        exported = len(result) > 0
+        file_paths = result
+    else:
+        exported = bool(result)
+        file_paths = [result] if result else [file_path]
+    return {"exported": exported, "file_paths": file_paths, "format": "obj"}
 
 
 def handle_export_fbx(params):
     file_path = params["file_path"]
-    result = export_api.ExportFBX(file_path)
+    try:
+        options = export_api.ImportExportOption()
+        result = export_api.ExportFBX(file_path, options)
+    except (AttributeError, TypeError):
+        result = export_api.ExportFBX(file_path)
     return {"exported": bool(result), "file_path": result or file_path, "format": "fbx"}
 
 
 def handle_export_glb(params):
     file_path = params["file_path"]
-    options = params.get("options", {})
-    if options:
-        opt = export_api.NewImportExportOption()
-        for key, val in options.items():
-            if hasattr(opt, key):
-                setattr(opt, key, val)
-        result = export_api.ExportGLB(file_path, opt)
-    else:
+    try:
+        options = export_api.ImportExportOption()
+        result = export_api.ExportGLB(file_path, options)
+    except (AttributeError, TypeError):
         result = export_api.ExportGLB(file_path)
     return {"exported": bool(result), "file_path": result or file_path, "format": "glb"}
 
 
 def handle_export_gltf(params):
     file_path = params["file_path"]
-    options = params.get("options", {})
-    if options:
-        opt = export_api.NewImportExportOption()
-        for key, val in options.items():
-            if hasattr(opt, key):
-                setattr(opt, key, val)
-        result = export_api.ExportGLTF(file_path, opt)
-    else:
+    try:
+        options = export_api.ImportExportOption()
+        result = export_api.ExportGLTF(file_path, options, False)
+    except (AttributeError, TypeError):
         result = export_api.ExportGLTF(file_path)
     return {"exported": bool(result), "file_path": result or file_path, "format": "gltf"}
 
 
 def handle_export_thumbnail(params):
     file_path = params["file_path"]
-    width = params.get("width", 512)
-    height = params.get("height", 512)
-    result = export_api.ExportThumbnail3D(file_path, width, height)
+    result = export_api.ExportThumbnail3D(file_path)
     return {"exported": bool(result), "file_path": result or file_path}
 
 
@@ -282,13 +284,21 @@ def handle_export_snapshot(params):
 
 def handle_export_turntable(params):
     file_path = params["file_path"]
-    result = export_api.ExportTurntableImages(file_path)
-    return {"exported": bool(result), "file_path": result or file_path}
+    num_images = params.get("number_of_images", 36)
+    width = params.get("width", 2500)
+    height = params.get("height", 2500)
+    result = export_api.ExportTurntableImages(file_path, num_images, width, height)
+    return {"exported": bool(result), "file_path": result or file_path,
+            "number_of_images": num_images, "width": width, "height": height}
 
 
 def handle_export_tech_pack(params):
     file_path = params["file_path"]
-    result = export_api.ExportTechPack(file_path)
+    try:
+        options = export_api.ExportTechpackOption()
+        result = export_api.ExportTechPack(file_path, options)
+    except (AttributeError, TypeError):
+        result = export_api.ExportTechPack(file_path)
     return {"exported": bool(result), "file_path": result or file_path}
 
 
@@ -419,7 +429,6 @@ HANDLERS = {
     "get_fabric_count": handle_get_fabric_count,
     "get_fabric_list": handle_get_fabric_list,
     "add_fabric": handle_add_fabric,
-    "replace_fabric": handle_replace_fabric,
     "assign_fabric": handle_assign_fabric,
     "set_fabric_color": handle_set_fabric_color,
     "get_fabric_for_pattern": handle_get_fabric_for_pattern,
