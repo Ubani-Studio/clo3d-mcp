@@ -1,5 +1,5 @@
 """
-CLO3D MCP Plugin — Socket server that runs inside CLO3D.
+CLO3D MCP Plugin: Socket server that runs inside CLO3D.
 
 Drag this file into CLO3D's Script Editor and run it.
 Opens a non-blocking TCP socket server on port 9877, listens for JSON
