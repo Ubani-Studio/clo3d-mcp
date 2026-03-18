@@ -1,0 +1,676 @@
+[v7.0.2, February 2025]
+Import_API Calls
+-  Added ImportAlembic to import Alembic files via the API 
+-  Added ImportAlembicOption to handle alembic options via API 
+     -  Added aLoadType Determines whether to add (true) or open (false) Alembic files during import via the API.
+     -  Added aUnit Specifies the translation unit for Alembic import: 0 - Millimeter, 1 - Centimeter, 2 - Inch, 3 - Meter, 4 - Feet.
+     -  Added aScale Sets the scale factor for Alembic import.
+     -  Added boolAddArrangementPoints If true, arrangement points are added during Alembic import.
+     -  Added boolAutoCreateFittingSuit If true, automatically creates a fitting suit during Alembic import.
+     -  Added morphingFrameCount Sets the morphing frame count for Alembic import (e.g., 1 to 99).
+     -  Added boolMoveGarmentToStartPosition If true, moves the garment to the start position during Alembic import.
+     -  Added boolTrace2DPatternsFromUVMap If true, traces 2D patterns from the UV map during Alembic import.
+     -  Added boolAlignBottonToGround If true, aligns the bottom of the garment to the ground during Alembic import.
+     -  Added translationValueX Sets the X-axis offset (left-right) in millimeters for Alembic import.
+     -  Added translationValueY Sets the Y-axis offset (up-down) in millimeters for Alembic import.
+
+Utility_API Calls
+-  Added SaveProject  to save the current project file via the API
+-  Added GetSimulationQuality Call to retrieve simulation quality settings, including CPU/GPU control parameters
+-  Added SetSimulationQuality Call to set simulation quality settings, allowing control over CPU/GPU usage
+
+[v7.0.1, January 2025]
+Utility_API Calls
+-  Added GetGraphicNormalMapTexture Retrieves the normal map texture for a graphic via the API.
+-  Added SetGraphicNormalMapTexture Sets the normal map texture for a graphic via the API.
+-  Added GetGraphicRoughnessMapTexture Retrieves the roughness map texture for a graphic via the API.
+-  Added SetGraphicRoughnessMapTexture Sets the roughness map texture for a graphic via the API.
+-  Added GetGraphicDisplacementMapTexture Retrieves the displacement map texture for a graphic via the API.
+-  Added SetGraphicDisplacementMapTexture Sets the displacement map texture for a graphic via the API.
+-  Added GetGraphicOpacityMapTexture Retrieves the opacity map texture for a graphic via the API.
+-  Added SetGraphicOpacityMapTexture Sets the opacity map texture for a graphic via the API.
+-  Added GetGraphicMetalnessMapTexture Retrieves the metalness map texture for a graphic via the API.
+-  Added SetGraphicMetalnessMapTexture Sets the metalness map texture for a graphic via the API.
+-  Added GetGraphicStyleColor Retrieves the style color information of a graphic via the API.
+-  Added SetGraphicStyleColor Updates the style color information of a graphic via the API.
+-  Added CopyColorway Creates a duplicate of a colorway for a graphic or fabric via the API.
+-  Added SetGraphicBaseColorMapTexture Sets the base color map texture for a graphic via the API.
+
+Fabric_API Calls
+-  Added GetSpecificColorwayFabricInfo Retrieves detailed fabric information for a specific colorway via the API.
+-  Added GetFabricItemNo Retrieves the item number of a fabric via the API.
+-  Added SetFabricItemNo Updates the item number of a fabric via the API.
+-  Added GetFabricIndexForPattern Retrieves the index of a fabric used in a specific pattern via the API.
+-  Added SetBaseTextureMapImageGivenFilePath Updates the base texture map of a fabric using a file path.
+-  Added SetNormalMapImageGivenFilePath Updates the normal map texture of a fabric using a file path.
+-  Added SetDisplacementMapImageGivenFilePath Updates the displacement map texture of a fabric using a file path.
+-  Added SetOpacityMapImageGivenFilePath Updates the opacity map texture of a fabric using a file path.
+-  Added SetRoughnessMapImageGivenFilePath Updates the roughness map texture of a fabric using a file path.
+-  Added SetMetalnessMapImageGivenFilePath Update
+
+[v7.0.0, December 2024]
+-  Added "ExportUSD" call in ExportAPI to export into USD format.  
+-  Added "ExportBOM" call in ExportAPI to support a wide string of the API. 
+- Added "AutoHanging" call in UtilityAPI to hang garment files into hanger files via API. Supports both Top and Bottom styles. 
+-  Added "FocusZoom and ZoomExtendAll" capabilities to "SetCamViewPoint" call in UtilityAPI. The list of the camera viewpoint is as follows: (0: bottom, 1:3/4 right, 2:front, 3:3/4 left, 4: right, 5:top, 6:left, 7:focus zoom, 8:back, 9:zoom extents all)
+-  Added "FitAllUV" call in UtilityAPI to fit all patterns within a specific cell in UV Editor. 
+-  Added "UpdatePropertyWindow" call in UtilityAPI to refresh the property window via API 
+-  Resolved issue with the "PatternJSON" APIs where superimpose value did not initialize. 
+
+[v6.0.4, January 2025]
+Utility_API Calls
+-  Added GetGraphicNormalMapTexture Retrieves the normal map texture for a graphic via the API.
+-  Added SetGraphicNormalMapTexture Sets the normal map texture for a graphic via the API.
+-  Added GetGraphicRoughnessMapTexture Retrieves the roughness map texture for a graphic via the API.
+-  Added SetGraphicRoughnessMapTexture Sets the roughness map texture for a graphic via the API.
+-  Added GetGraphicDisplacementMapTexture Retrieves the displacement map texture for a graphic via the API.
+-  Added SetGraphicDisplacementMapTexture Sets the displacement map texture for a graphic via the API.
+-  Added GetGraphicOpacityMapTexture Retrieves the opacity map texture for a graphic via the API.
+-  Added SetGraphicOpacityMapTexture Sets the opacity map texture for a graphic via the API.
+-  Added GetGraphicMetalnessMapTexture Retrieves the metalness map texture for a graphic via the API.
+-  Added SetGraphicMetalnessMapTexture Sets the metalness map texture for a graphic via the API.
+-  Added GetGraphicStyleColor Retrieves the style color information of a graphic via the API.
+-  Added SetGraphicStyleColor Updates the style color information of a graphic via the API.
+-  Added CopyColorway Creates a duplicate of a colorway for a graphic or fabric via the API.
+-  Added SetGraphicBaseColorMapTexture Sets the base color map texture for a graphic via the API.
+
+Fabric_API Calls
+-  Added GetSpecificColorwayFabricInfo Retrieves detailed fabric information for a specific colorway via the API.
+-  Added GetFabricItemNo Retrieves the item number of a fabric via the API.
+-  Added SetFabricItemNo Updates the item number of a fabric via the API.
+-  Added GetFabricIndexForPattern Retrieves the index of a fabric used in a specific pattern via the API.
+-  Added SetBaseTextureMapImageGivenFilePath Updates the base texture map of a fabric using a file path.
+-  Added SetNormalMapImageGivenFilePath Updates the normal map texture of a fabric using a file path.
+-  Added SetDisplacementMapImageGivenFilePath Updates the displacement map texture of a fabric using a file path.
+-  Added SetOpacityMapImageGivenFilePath Updates the opacity map texture of a fabric using a file path.
+-  Added SetRoughnessMapImageGivenFilePath Updates the roughness map texture of a fabric using a file path.
+-  Added SetMetalnessMapImageGivenFilePath Update
+
+[v6.0.3, October 2024]
+-  Added "GetPinListSize" call in PatternAPI to get the current pin list 
+-  Added "RemovePin" call in PatternAPI to remove Pin with the input of number 
+-  Added "RemoveAllPins" call in PatternAPI to remove Pins at once 
+-  Resolved crash issue with the SaveCLOFileThumbnail API
+-  Resolved crash issue with importPatternJSON API 
+
+[v6.0.2, September 2024]
+-  Added "ImportPose" call in ImportAPI to load pose file and applying to corresponding avatar via API
+-  Added "ImportGLTFAsFabric" call in FabricAPI to bring in fabric glTF/glB via API 
+-  Added "_assignOption" parameter within AssignFabricToPattern in FabricAPI to choose colorway option when assigning fabric to a pattern.
+-  Added "SetFabricName" call in FabricAPI to change the Fabric Name of Fabric that are added to the object browser using API 
+-  Added "ReplaceFabric" call in FabricAPI to replace added fabric with new fabric using API 
+-  Improved "LoadLibraryColorSwatchList" call in UtilityAPI to set name of the tab when loading a list of color palettes via API
+-  Improved "ExportGLTFAsFabric" call in FabricAPI instead of ExportAPI. If you have previously used this API, please make changes.
+
+[v6.0.1, August 2024]
+-  Added "ExportBOM" call in ExportAPI to export BOM information in CSV format via the API.
+-  Added "UpdateCloStyleForPlugIn" call in UtilityAPI to apply the CLO Skin style to previously created plugins.
+-  Added "SetAPF" call in UtilityAPI to set the Alvanon APF file.
+-  Added "ABPNetworkAuth" call in UtilityAPI to register Alvanon ID and password via the API.
+-  Added GetBaseTextureMapImageFilePath() - call in UtilityAPI to retrieve the base texture map image file path via the API.
+-  Added GetNormalMapImageFilePath() - call in UtilityAPI to retrieve the normal map image file path via the API.
+-  Added GetDisplacementMapImageFilePath() - call in UtilityAPI to retrieve the displacement map image file path via the API.
+-  Added GetOpacityMapImageFilePath() - call in UtilityAPI to retrieve the opacity map image file path via the API.
+-  Added GetRoughnessMapImageFilePath() - call in UtilityAPI to retrieve the roughness map image file path via the API.
+-  Added GetMetalnessMapImageFilePath() - call in UtilityAPI to retrieve the metalness map image file path via the API.
+-  Added SetBaseTextureMapImageGivenFilePath(imagePath) - call in UtilityAPI to set the base texture map image file path via the API.
+-  Added SetNormalMapImageGivenFilePath(imagePath) - call in UtilityAPI to set the normal map image file path via the API.
+-  Added SetDisplacementMapImageGivenFilePath(imagePath) - call in UtilityAPI to set the displacement map image file path via the API.
+-  Added SetOpacityMapImageGivenFilePath(imagePath) - call in UtilityAPI to set the opacity map image file path via the API.
+-  Added SetRoughnessMapImageGivenFilePath(imagePath) - call in UtilityAPI to set the roughness map image file path via the API.
+-  Added SetMetalnessMapImageGivenFilePath(imagePath) - call in UtilityAPI to set the metalness map image file path via the API.
+-  Added SetZoomCloth() - call in UtilityAPI to zoom the cloth view via the API.
+-  Added SetViewPoint(index) - call in UtilityAPI to set the view point using the specified index via the API.
+-  Added GetViewPoint() - call in UtilityAPI to retrieve the current view point via the API.
+-  Added SaveCLOFileThumbnail - call in UtilityAPI to save the CLO file's thumbnail via the API.
+-  Added SetRoughnessValueIntensity - call in FabricAPI to set the roughness value intensity via the API.
+-  Improved "UpdateCloStyleForPlugIn" call in UtilityAPI by adding WidgetType as a parameter in the CLOSTYLE API.
+-  Fixed issue with "ImportFile" call in ImportAPI, which previously only returned True when invoked.
+-  Fixed issue with "Get/SetArrangementPoint" call in PatternAPI, which was not functioning correctly.
+-  Fixed crash issue with "LoadLibraryColorSwatchList" call in UtilityAPI.
+
+[v6.0.0, July 2024]
+-  Enhancement has been applied using Colorway-related APIs. Please refer to the list of Fabric APIs that had the enhancement https://docs.google.com/spreadsheets/d/13VG0fGvapdSB9nO0ndw8l2EMT_9bgOyaEgzwtva14Rk/edit?usp=sharing.
+      - Enhancement covers all the issue occurred while using Fabric_API that involves the colorway and colorwayindex. 
+-  Fixed CLO Crashing issue when using importPatternJson API 
+
+[v5.0.0, April 2024]
+-  Added "ResetUVto2DArrangement" call in UtilityAPI to match the pattern arrangement within 2D to UV layout. 
+-  Added "UpdateCloStyleForPlugIn" call in UtilityAPI to use the CLO Skin style for the previously created plugins. 
+
+[v4.3.5, April 2024]
+-  Added Colorway Index to API call within FABRIC_API
+-  Added FabricAssignedOption Parameter within AssignFabrictoPattern API call in Fabric_API
+-  Added Custom Color Palette with Multiple Color Library API to set up custom color library within one tab.
+-  Added Get/SetGraphicStyleName API call in Utility_API
+-  Added GetPBRMaterialDisplacementValue API call in Fabric_API
+-  Added PLMid to SetFabricPBRMaterialBaseColor API call in FABRIC_API
+-  Added ExportAlembic (OGAWA) call in Export APi to export Alembic format via API
+-  Improved Pattern JSON API in PATTERN_API
+-  Improved ConvertZblcToZmod call in EXPORT_API
+-  Added Information within GLTF where item relation is shown
+-  Fixed Crash issue occurring when calling StartNesting API
+
+[v4.3.3, February 2024]
+-   Added "ImportTrim" call in ImportAPI to load trim into the scene via API
+-   Added "PUT" call in RestAPI to have more scalability using Rest API 
+-   Added "Set3DGarmentRenderingStyle" call in UtilityAPI to set 3D garment rendering style via API 
+-   Added "Get3DGarmentRenderingStyle" call in UtilityAPI to get current 3D garment rendering style status via API
+
+[v4.3.2, January 2024]
+-   Added "AddSeamlineTopstitch" call in PatternAPI to add topstitches to the seamline via API
+-   Added "ExportPatternJSON" call in PatternAPI to Export Pattern JSON via API
+-   Added Colorway ID and Colorway Name to FabricList, ButtonHeadList, ButtonHoleList, TrimList , ZipperLists, TopstitchList within the Techpack API call in ExportAPI
+-   Added "GetReflectionRoughness" call in FabricAPI to get the value of the reflection roughness via API
+-   Added "SetReflectionRoughness" call in FabricAPI to set the value of the reflection roughness via API
+-   Added "GetReflectionIntensity" call in FabricAPI to get the value of the reflection intensity via API
+-   Added "SetReflectionIntensity" call in FabricAPI to set the value of the reflection intensity via API
+-   Added "GetMetalness" call in FabricAPI to get the value of the metalness via API
+-   Added "SetMetalness" call in FabricAPI to set the value of the metalness via API
+-   Added "GetNormalMapIntensity" call in FabricAPI to get the value of the normal map intensity via API
+-   Added "SetNormalMapIntensity" call in FabricAPI to set the value of the normal map intensity via API
+-   Added "ImportPatternJSON" call in PatternAPI to Import Pattern JSON via API
+-   Added Multi Thread  Support for RestAPI
+-   Added "GetSeamlinePairGroupListInPattern" call in PatternAPI to get the seamline pair group list in pattern via API
+-   Added "AddSeamlineTopstitch" call in PatternAPI to add seamline topstitch via API
+-   Added "GetSeamlinePairGroupCount" call in PatternAPI to get the seamline paired group count via API
+-   Added "GetSeamlinePairGroupName" call in PatternAPI to get the seamline paired group name via API
+-   Added "GetSeamlinePairGroupIndexFromName" call in PatternAPI to get seamline paired group index from name via API
+-   Added "GetAllStitchProperty" call in PatternAPI to get all stitch property via API
+-   Added "AddSeamlinePairGroup" call in PatternAPI to add seamline paried group via API
+
+[v4.3.1, December 2023]
+-   Fixed the issue where the API Library Sample Tab did not show the folder structure
+-   Fixed the sample code for library window implementation to test the library folder structure
+-   Fixed the issue of “ExportFBX” API where the Avatar was not being exported
+-   Fixed the issue of “ExportGLB” API where the Garment was not being exported when Colorway Option is included
+-   Fixed the issue of “UpdateColorway” API where the API was not working properly.
+
+[v4.3.0 November 2023]
+-   Parameters for Colorway Related APIs has been Changed. Affected APIs are as following.
+     -  FabricAPI 
+	-  GetFirstFabricTextureName(int colorwayIndex)
+	-  GetColorwayFabricInfo(int colorwayIndex, int fabricIndex)
+	-  SetFabricPBRMaterialBaseColor(unsigned int colorwayIndex, unsigned int fabricIndex, unsigned int materialFace, float r, float g, float b, float a)
+	-  GetFabricPBRMaterialBaseColor(unsigned int colorwayIndex, unsigned int fabricIndex, unsigned int materialFace)
+	-  SetPBRMaterialDisplacementMap(unsigned int _colorwayIndex, unsigned int _fabricIndex, const std::string &_path)
+	-  GetPBRMaterialDisplacementMapValue(unsigned int _colorwayIndex, unsigned int _fabricIndex)
+	-  SetPBRMaterialDisplacementMapValue(unsigned int _colorwayIndex, unsigned int _fabricIndex, float _amount, float _shift, float _clipping, float _particleDist, bool _keep)
+	-  GetGivenIndexMatProxy(unsigned int _colorwayIndex, unsigned int _fabricIndex, unsigned int materialFace)
+     -  UtilityAPI
+	-  SetNestingTargetColorway(vector<int> _colorwayList)
+        -  GetNestingTargetColorway()
+-   Added "ExportStdViewImage" call in ExportAPI to Export Standard View Image of a 3D Scene via API 
+-   Added "ExportStdViewImageforAllColorways" call in ExportAPI to Export Standard View Image for All of the Colorways of a 3D Scene via API 
+-   Added "ExportCustomViewImage" call in ExportAPI to Export Custom View Image of a 3D Scene via API 
+-   Added "ExportCustomViewImageForAllColorways" call in ExportAPI to Export MultiView Images for All of the Colorways of a 3D Scene via API
+-   Added "ExportMultiViewImages" call in ExportAPI to Export Custom View Image of a 3D Scene via API 
+-   Added "ExportMultiViewImagesForAllColorways" call in ExportAPI to Export MultiView Images for All of the Colorways of a 3D Scene via API
+-   Changed the Strucutre of Library Window Implementation Library Structure to Latest CLO Tree Folder Structure 
+-   Added Disable Side Menu Attributes Editable in Library Window Implementation to Disable the Changes to the Side Menu Attributes Edits 
+-   Added ApiStubFiles within CLO.exe Folder (For Python API) 
+
+[v4.2.2, September 2023]
+-   Added parameter to "ExportPOM" call in ExportAPI to extract 2D & 3D POM data via API
+-   Added "SetPBRMaterialDispacementMap" call in FabricAPI to add Displacement Map via API  
+-   Added "SetPBRMaterialDispacementMapValue" call in FabricAPI to edit Displacement Map value via API  
+-   Fixed issue where "UVPacking" call in UtilityAPI is crashing when being called via API 
+
+[v4.2.1, August 2023]
+-   Added "ImportAsGraphic" call in ImportAPI to add an image as a graphic via API
+-   Added "AddPluginFromFile" call in UtilityAPI to Add DLL/DYLIB file to the plugin list in CLO via API 
+-   Added "RemovePinByIndex" call in PatternAPI to remove the pin via API 
+-   Added "GetPinList" call in PatternAPI to get all the pin currently applied to the garment via API
+-   Added "RemovePluginFromList" call in UtilityAPI to remove the plugin from the added plugin list via API 
+-   Added "UsePlugInFromList" call in UtilityAPI to use the plugin from the plugin list with index via API
+-   Added "TerminatePlugInFromList" call in UtilityAPI to terminate the currently running plugin via API
+-   Added "Refresh3DScene" call in UtilityAPI to update the 3D window via API
+-   Added "ChangeGradingSize" call in PatternAPI to change the grading size using API 
+-   Added "ConvertZblcToZmod" call in ExportAPI to convert old modular file to new modular file via API 
+-   Added "GetColorwayColorItemName" call in UtilityAPI to get the colorway color item name via API
+-   Added "GetColorwayColorItemPlmId" call in UtilityAPI to get the colorway color item plm ID via API 
+-   Added "GetColorwayColorItemRGB" call in UtilityAPI to get the RGB Value of the Colorway Color Item via API 
+-   Added "SetColorwayColorItem" call in UtilityAPI to Set the Colorway Color of the Item via API
+-   Added "ExportMultiViewImagesForAllColorways" call in ExportAPI to Export multiview of the images for all of the colorways via API
+-   Added "ExportMultiViewImages" call in ExportAPI to export multiview of the images of the current colorway via API 
+-   Added "ExportCustomViewImageForAllColorways" call in ExportAPI to export custom view images for all colorways via API 
+-   Added "ExportCustomViewImage" call in ExportAPI to export custom view of the image for current colorway via API 
+-   Added "ExportStdViewImageForAllColorways" call in ExportAPI to export current view of the image for all of the colorways via API 
+-   Added "ExportStdViewImage" call in ExportAPI to export current view of the current colorway via API 
+-   Transition completed from Qmake -> Cmake. Now the project has to be built with Cmake. 
+-   Guide to how to build in Cmake can be found here https://developer.clo3d.com/
+-   Python API Editor Improvement 
+	- Editor Re-Sizing 
+	- IntelliSense
+
+[v4.2.0, June, 2023]
+-   Added "SetTrimWeight" call in UtilityAPI to set the weight of the selected Trim via API
+-   Added "ExportTrm" call in ExportAPI to export trim from CLO via API
+-   Added "CreateZfab" call in FabricAPI to create Zfab with desired texture maps via API 
+-   Added "CombineZfab" call in FabricAPI to combine two zfab to form a one Zfab via API.
+-   Added "ExportObjectBrowserMaterialList" call in PatternAPI to get the item list within object browser via API 
+-   Transition completed from Qmake -> Cmake. Now the project has to be built with Cmake. 
+-   Guide to how to build in Cmake can be found here https://developer.clo3d.com/
+-   Library Window Implementation Plugin dll/dylib has to be positioned below path. 
+	-   Windows: C:\Users\Public\Documents\CLO\Plugins
+	-   Mac: Documents/clo/Plugins
+
+[v4.1.4, May, 2023]
+-   Added "SetUseSameColorAsFront" call in FabricAPI to set same color used in front via API
+-   Added "BakeUVTexture" call in UtilityAPI to export baked textures of UV via API
+-   Added "UVPacking" call in UtilityAPI to arrange patterns into zero to one cell in UV via API
+-   Fixed issue where Crash occurred when using ExportTechpack API
+
+[v4.1.3, May, 2023]
+-   Added "Change Fabric Roughness Type" call in FabricAPI to change the roughness type via API
+-   Added "Change Fabric Roughness Value" call in FabricAPI to change the values via API 
+-   Added "Change Topstitch Type" call in PatternAPI to change the topstitch type via API 
+-   Added "Get/Set Quality Render" call in UtilityAPI to get the status and set the quality render via API 
+-   Added "ModularConfigurator Add" call in UtilityAPI to add the path for modular configurator
+-   Fixed issue where added plugins get disappeared after restart of the CLO 
+-   Fixed issue where stitch mesh exporting via API
+
+[v4.1.2, April, 2023]
+-   Added swatchName parameter to "AddColorSwatch" call in UtilityAPI to display swatchName in color Tab
+-   Fixed "AddColorSwatch" call in UtilityAPI where tab was created for each .cco file
+
+[v4.1.1, February, 2023]
+-   Added "GetNestingTime" call in PatternAPI to get the time of running the Nesting feature via API
+-   Added "StopNesting" call in PatternAPI to stop nesting feature via API
+-   Added "SetSchematicSilhouetteLineWidth" call in UtilityAPI to set schematic silhouette line width value via API 
+-   Added "SetSchematicSeamlineWidth" call in UtilityAPI to set schematic seamline width value via API
+-   Added "SetSchematicInternalLineWidth" call in UtilityAPI to set schematic internal line width value via API
+-   Added "SetSchematicTopstitchLineScalePercent" call in UtilityAPI to set schematic topstitch line scale percent value via API
+-   Added "SetSchematicSBrightness" call in UtilityAPI to set schematic brightness value via API
+-   Added "SetSchematicSilhouetteLine" call in UtilityAPI to set schematic silhouette value via API
+-   Added "SetSchematicSeamLine" call in UtilityAPI to set schematic seamline value via API
+-   Added "SetSchematicInternalLine" call in UtilityAPI to set schematic internal line value via API
+-   Added "SetSchematicTopstitchLine" call in UtilityAPI to set schematic topstitch line value via API
+-   Added "SetSchematicClothRenderType" call in UtilityAPI to set schematic cloth rendering type via API
+-   Added "SetStyleLineColor" call in UtilityAPI to set Style Line Color via API
+-   Added "SetSchematicClothColor" call in UtilityAPI to set schematic cloth color via API
+-   Added "Setcurrentfabric" call in FabricAPI to set schematic cloth color via API
+-   Fixed issues where library window tab items were duplicating continuously 
+-   Fixed issues where tab switching issue in Library Window
+-   Fixed issues where add colorsawtch behavior changed 
+-   Fixed issues where setting fabric APIs does not work if called continuously
+
+[v4.1.0, December, 2022]
+-   Added "GetCurrentStatusofAvatar" call in UtilityAPI to get current status of avatar via API 
+-   Added "GetSchematicRenderStatus" call in UtilityAPI to get status of schematic render via API 
+-   Added "ImportOBJ" call in UtilityAPI to importobj with more option via API 
+-   Added "SETFabricColor" call in FabricAPI to set fabric color via API 
+-   Added "SetUseSameMaterialasFront" call in UtilityAPI to set same materials as front on different sides via API 
+-   Added "Set3DviewwithIndex" call in UtilityAPI to set 3Dview with Index via API 
+-   Added "Get/SetStrainStressMap" call in UtilityAPI to get/set strain and stress map via API 
+-   Added "RefreshAPI" call in UtilityAPI to refresh APIs via API 
+
+[v4.0.4, November, 2022]
+- Fixed maps rotating issue when using export glB/glTF API in Mac M1
+
+[v4.0.3, October, 2022]
+-   Added "SetAnimationRecording" call in UtilityAPI to set animation recording via API 
+-   Added "Get/SetCurrentAnimationFrame" call in UtilityAPI to get/set current status of the animation frame via API 
+-   Added "GetStart/EndAnimationFrame" call in UtililtyAPI to get Start and the End of the Animation frames via API 
+-   Added "More Options" within ImportExportOption when calling import FBX and glTF via API. 
+	- bAutoTranslate
+	- bCreateCamera
+	- bCreateAnimation
+	- bCreateCacheAniamtion
+	- bMoveGarment
+	- bAddArrangementPoints
+	- bAutoCreateFittingSuit
+	- bAdd
+-   Added "ImportSMP" call in ImportAPI to import in SMP files via API  
+-   Added "ImportSubstanceFileAsFaceType" call in UtilityAPI to set Substance Materials on different faces via API 
+-   Added "ExportAVT" call in ExportAPI to export as AVT via API 
+-   Added "PatternAnnotation" call in PatternAPI to get/set pattern annotation via API  
+-   Added "SetSubstanceProperties" call in FabricAPI to set Texture Mapping, Preset, Resolution via API 
+-   Fixed Issues where Zpac was not loaded properly via Importfile API in Headless Mode
+
+[v4.0.2, August, 2022]
+-   Added "ImportFileByObjType" call in ImportAPI to import external 3D formats with their types(Avatar/Trim) via API 
+-   Added "SetAvatarBodyTexture" call in UtilityAPI to change Avatar textures via API
+-   Added "Get/SetFabricWidth" call in FabricAPI to get information of Fabric Width via API
+-   Added "GetFabricLength" call in FabricAPI to get information of Fabric Length via API
+-   Added "StartNesting" call in UtilityAPI to start the Nesting via API
+-   Added "Set/GetNestingBufferSpacing" call in UtilityAPI to get and set informaiton for buffer spacing of nesting via API
+-   Added "Get/SetNestingTargetColorway" call in UtilityAPI to get and set target colorway index via API
+-   Added "Get/SetNestingPatternPieceGrainDirection" call in PatternAPI to get information of Grain on Pattern via API
+-   Added "Get/SetNestingFixedPatternPiecePos" call in PatternAPI to get fixed position of pattern piece via API
+
+[v4.0.1, July, 2022]
+-   Added "ImportAVAC" call in ImportAPI to import Alvanon avatar via API 
+-   Added "CreatePatternWithPoint" call in PatternAPI to create pattern via API
+
+[v4.0.0, June, 2022]
+- PatternAPI 
+     - Added "Copy Pattern Piece Position" call in PatternAPI
+     - Added "Copy Pattern Piece Move" call in PatternAPI
+     - Added "Delete Pattern Piece" call in PatternAPI
+     - Added "Delete Line" call in PatternAPI
+     - Added "Delete Point" call in PatternAPI
+     - Added "Flip Pattern Piece" call in PatternAPI
+     - Added "Layer Clone Pattern Piece Position" call in PatternAPI
+     - Added "Layer Clone Pattern Peice Move" call in PatternAPI
+     - Added "Offset as Internal Line " call in PatternAPI
+     - Added "Unfold Pattern Piece" call in PatternAPI
+     - Added "Convert to Base Line" call in PatternAPI
+     - Added "Convert to Internal Line " call in PatternAPI
+     - Added "Distibute Internal Lines Between Segments " call in PatternAPI
+     - Added "Get/Set Pattern Piece Position " call in PatternAPI
+     - Added "Set Pattern Piece Move" call in PatternAPI
+     - Added "Elastic" call in PatternAPI
+     - Added "Elastic Strength " call in PatternAPI
+     - Added "Elastic Strength Ratio" call in PatternAPI
+     - Added "Elastic Segment Length " call in PatternAPI
+     - Added "Elastic Total Length " call in PatternAPI
+     - Added "Shrring" call in PatternAPI
+     - Added "Shirring Interval " call in PatternAPI
+     - Added "Shirring Height " call in PatternAPI
+     - Added "Shirring Extend " call in PatternAPI
+     - Added "Seamtaping " call in PatternAPI
+     - Added "Seamtaping Width" call in PatternAPI
+     - Added "Pattern Piece Info " call in PatternAPI
+     - Added "Pattern Piece Fabric Style Info" call in PatternAPI
+     - Added "Pattern Piece Solidify Info" call in PatternAPI
+     - Added "Get Fabric Style Name List " call in PatternAPI
+     - Added "Get/Set Pattern Layer" call in PatternAPI
+     - Added "Set Pattern Strengthen " call in PatternAPI
+     - Added "Set Pattern Lock " call in PatternAPI
+     - Added "Set Pattern Hide" call in PatternAPI
+     - Added "Set Pattern Lock" call in PatternAPI
+     - Added "Set Pattern Hide 3D " call in PatternAPI
+     - Added "Set Pattern Freeze" call in PatternAPI
+     - Added "Add Segment Topstitch " call in PatternAPI
+     - Added "Get Topstitch Style list" call in PatternAPI
+     - Added "Get Pattern Assigned Topstitch Count/Style/StyleIndex" call in PatternAPI
+     - Added "Set Pattern Assigned Toptstich Style" call in PatternAPI
+     - Added "Is/Set Pattern Assigned Topstitch Extend Start" call in PatternAPI
+     - Added "Is/Set Pattern Assigned Topstitch Extend End " call in PatternAPI
+     - Added "Is/Set Pattern Assigned Topstitch Curved" call in PatternAPI
+     - Added "Get/Set Pattern Assigned Toptstitch Curved Length" call in PatternAPI
+     - Added "Is/Set Pattern Assigned Topstitch Curved Right Angled " call in PatternAPI
+     - Added "Get/Set Pattern Assigned Topstitch Zoffset " call in PatternAPI
+     - Added "Import Topstitch Style " call in PatternAPI
+-Utility API
+     - Added "Import Graphic Styles" call in UtilityAPI
+     - Added "Replace Graphic Styles" call in UtilityAPI
+     - Added "Simulate" call in UtilityAPI
+     - Added "SetSimulationQuality" call in UtilityAPI
+     - Added "SetSimulationTimestep" call in UtilityAPI
+     - Added "SetSimulationNumberofSimulation" call in UtilityAPI
+     - Added "SetSimulationCGFinishCondition" call in UtilityAPI
+     - Added "SetSimulationCGIterationCount" call in UtilityAPI
+     - Added "SetSimulationSelfCollisionIterationCount" call in UtilityAPI
+     - Added "SetSimulationAirDamping" call in UtilityAPI
+     - Added "SetSimulationGravity" call in UtilityAPI
+     - Added "SetSimulationNumberOfCPUInUse" call in UtilityAPI
+     - Added "SetSimulationCGResidual" call in UtilityAPI
+     - Added "SetSimulationGroundCollision" call in UtilityAPI
+     - Added "SetSimulationGroundHeight" call in UtilityAPI
+     - Added "SetSimulationSelfCollisionAvoidanceStiffness" call in UtilityAPI
+     - Added "SetSimulationLayerBasedCollisionDetection" call in UtilityAPI
+     - Added "SetSimulationNonlinearSimulation" call in UtilityAPI
+     - Added "SetSimulationNonlinearSimulation" call in UtilityAPI
+-Import API
+     - Added "ImportSubstanceFile" call in Import API 
+
+[v3.2.2, April, 2022] 
+-   Added "DeleteColorway" call in UtilityAPI to delete colorways with Index via API 
+
+[v3.2.1, January, 2022] 
+-   Added "ExportFBX" call in ExportAPI to Export FBX files via API 
+
+[v3.2.0, December 2021] 
+-   Added "ImportDXF" call in ImportAPI to Import DXF files via API 
+-   Added "GetPatternPieceArea" call in PatternAPI to Get the Area of a Pattern Piece via API 
+-   Added "GetLineLength" call in PatternAPI to Get the Line Length via API 
+-   Added "GetPatternInputInformation" call in PatternAPI to Get the Information of a Pattern Piece via API 
+-   Added "GetPattern/PatternsBoundingBox" call in PatternAPI to Get the Size of a Pattern Piece via API
+-   Added "Get/SetPatternParticleDistance" call in PatternAPI to Get the Current Particle Distance of a Pattern Piece via API
+-   Added "Get/SetPatternMeshType" call in PatternAPI to change the Pattern Mesh Type of a Pattern Piece via API
+-   Added "GetPatternMeshCount" call in PatternAPI to Get the Count of a Mesh within a Pattern Piece via API
+-   Added "GetPatternShrinkagePercent" call in PatternAPI to Get the Value of Shrinkage Percent of a Pattern Piece via API  
+-   Added "Get/SetArrangement"  call in PatternAPI to Get the information of the pattern Piece by Index via API
+-   Added "SetFabricName" call in FabricAPI to change the name of the Zfab via API
+-   Added Export Turntable Images based on Colorway Index in ExportAPI to export turntable images based on the colorway index
+-   Added "ExportPose" call in ExportAPI to export .pos of current avatar via API
+-   Added "ColorwayUpdate" call in UtilityAPI to update the colorway window via API 
+
+[v3.1.4, September 2021] 
+-   Added Export Option Dialog Window Popup at ExportglTF in ExportAPI
+-   Added "ExportPOM" call in ExportAPI
+-   Added "SetShowHideAvatar" call in UtilityAPI to Toggle On&Off Avatar via API 
+-   Added "SetSchematicRender" call in UtilityAPI to Toggle On&Off Schematic Render via API
+-   Added "ImportVMP" call in ImportAPI to Import Render Image / Video Properties via API
+-   Added "ImportVLP" call in ImportAPI to Import Render Light Properties via API
+-   Added "ImportCPT" call in ImportAPI to Import Camera Properties via API 
+-   Added "ImportVRP" call in ImportAPI to Import Render Properties via API 
+-   Fixed Reverse Compatibility Failure Issue
+-   Added Fragment Mesh Option Included in the Dialog of exportglTF 
+  
+[v3.1.3, August 2021] **Obsolete** 
+Reason: Reverse Compatibility Failure Occurrence 
+
+[v3.1.2, July 2021]
+-   Added "GetColorListForColorWay" in UtilityAPI
+-   Revised "USE_CUSTOM_TAB_AS_DEFAULT" in Library Window Implementation
+-   Export "FabricglTF" call in ExportAPI 
+
+[v3.1.1, Jun 2021]
+-   Added "ImportOBJ" / "ImportOBJW" for OBJ/Zipped OBJ files in Import API
+-   Added "GetPrimaryFabric" in FabricAPI
+-   Added "GetColorListForColorWay" in UtilityAPI
+-   Added "SetCustomImage / SetCustomImageW" in Fabric API
+-   Added "SetFabricInformation" in Fabric API to change SupplierName and Owner 
+-   Revised  "AddColorSwatch / AddColorSwatchW" in UtilityAPI to append existing colorswatch
+-   Fixed issue of writing metada on ZPL files with "SetAPIMetaData" in Utility API 
+
+[v3.1.0, May 2021]
+-	Fixed "ExportTurntableImages" call in ExportAPI to start the capture and export at the frontal view with the file name test_0
+-	Added API Icon to the Iibrary Tab 
+
+[v3.0.2, April 2021]
+-	Added "ExportGLB" call in ExportAPI 
+-	Revised "ExportFabric" call not to export ".jfab" file downloaded from CLO-SET/CLO-SET Connect
+- 	Fixed "ExportFabric" call to export ".jfab" file with the image files paths described in the absolute paths not the relative paths
+-	Fixed "GetPatternInformation" and other calls in PatternAPI to work for the pattern list in the 2D window regardless 'included in techpack(.json)' option
+-	Fixed issue with "bSingleObject" option in ExportGLTF 
+-	Added Renaming of Zfab/Trims when added to the Object Browser 
+-	Added same Right-Clicking event as CLO Library Tab to the PLM tab  
+
+[v3.0.1, Dec 2020]	[v3.0.1, Dec 2020]
+-	Added "GetAssetIconInCLOFile" call in UtilityAPI to get the asset icon thumbnail from CLO format files	
+-	Revised "GetPNGThumbnail" implementation in LibraryWindowImplPlugin sample project to use "GetAssetIconInCLOFile"	
+-	Fixed issue with "ImportZprj" API adding extra files 
+-	Fixed issue with "ImportZprj" API adding extra files 
+-	Added btn/bth metadata list preview in API tab
+-	Added btn/bth metadata list preview in API tab
+-	Fixed issue with "GetTabName" in Library Windows Interface
+-	Fixed issue with "GetTabName" in Library Windows Interface
+-	Fixed Mac Build error 
+-	Fixed Mac Build error 
+
+[v3.0, Nov 2020]
+-	Added "m_ShowBaseLineFor3DCapturePerColorway" option in ExportTechpackOption to show/hide 3d base line in 3D captured images in Techpack
+-	Added "ExportGarmentInformationConfigData" to export configurated data of garment information to Json.  
+-	Added "ExportGarmentInformationConfigDataToStream" to export configurated data of garment information to stream.  
+-	Added "ImportGarmentInformation"/ "ImportGarmentInformationW" to import garment information
+-	Added "ImportGarmentInformationConfigData"/ "ImportGarmentInformationConfigDataW" to import configured data of garment information
+-	Added "UpdateGarmentInformationByAPI" to update garment information
+-	Added "UpdateGarmentInformationConfigDataByAPI" to update configured data of garment information 
+-	Upgraded Qt framework from 4.x to 5.x per CLO 6.0, especially for the Library Windows Interface sample project. Please download and set up the Qt 5.14.2. Detailed instruction can be found on the CLO API/SDK manual.
+
+[v2.9, Jul 2020]
+-	Added "SetAPIMetaData" / "SetAPIMetaDataW" for CLO files in Utility API 
+-	Added "GetAPIMetaData" / "GetAPIMetaDataW" for CLO files in Utility API 
+-	Added "Set3DWindowTitle" / "Set3DWindowTitleW" in Utility API 
+-	Added "CopyColorway" in Utility API 
+
+[v2.8, May 2020]
+- 	Added "ExportGLTF" and "ExportGLTFW" in Export API
+- 	Added "colorwayCostInfo" key (techpack json v2.2)
+-	Added "spi" and "threadThicknessUnit" keys in subStitchList for topStitchList (techpack json v2.2); changed "threadThickness" from mm to "threadThicknessUnit"
+-	Added "annotation" key for each pattern (techpack json v2.2)
+-	Added "ExportTurntableImages", "ExportTurntableImagesW" in Export API
+-	Added "usedAsTrim" in trimList for OBJ/Trim, graphicInstanceList, patternList, topstitchList (techpack json v2.3)
+
+[v2.7 with CLO 5.2 official release, April 2020]
+-	Added PLM Setting Dialog Sample into Library Windows Sample Demo(LibraryWindowImplementation sample project)
+-	Added "NewProject" in Utility API	
+-	Added "GetAPIMetaDataFromFile" and "GetAPIMetaDataFromFileW" in Fabric API
+-	Added CLO file related API calls; especially for Library Windows Sample Demo in Utility API:
+            IsReadableImageFormatFromExtension, IsReadableImageFormatFromExtensionW
+	IsCLOFileFormatWithTripleThumbnailExtension, IsCLOFileFormatWithTripleThumbnailExtensionW
+-	Added "GetCLOExecutableFolderPath" and "GetCLOExecutableFolderPathW" in Utility API
+-	Added "GetCLOAssetFolderPath" and "GetCLOAssetFolderPathW" in Utility API
+-	Deprecated "GetFabricSize()" and "GetPatternSize()". Please use "GetFabricCount()" and "GetPatternCount()"
+
+[v2.6 with CLO 5.1 6th patch, Jan 2020]
+-	'Graphic Type' and 'Interlining(Bond)' information are added in Techkpack(.json)
+-	Fixed the issue that saving project was failing while running ExportTechpack api call
+-	Fixed tha issue that 'Project Name' and '3D Windows Title' were not updated by ImportZprj
+
+[v2.6 with CLO 5.1 5th patch, Jan 2020]
+-	Added "AddColorSwatch" and "AddColorSwatchW" in Uitlity API. 
+
+[v2.5, Dec 2019]
+- 	Added "GetCustomViewInformation" in Utility API. You can get Camera Matrix and FOV of cusotom views. 
+-	Added a functionality to load .zcmr (Custom View file) with ImportFile() in ImportAPI
+-	Added "SetColorwayName", "SetColorwayNameW", "GetColorwayName", "GetColorwayNameW", "RefreshColorwayDialog" and in Utility API
+-	Added "GetFabricName", "GetColorwayFabricInfo" in FabricAPI
+-	Added a plug-in function for ExportPlugin project - "DoFunctionAferLoadingCLOFile(const char* fileExtenstion)"
+-	Added PatternAPI class with  "GetPatternInformation" call
+-	Moved "GetPatternSize", "GetPatternIndex" from FabricAPI to PatternAPI
+-	Added "GetByteArrayFromStream" in Rest API
+-	Added api calls with 'wstring' type for Unicode in Export API:
+            "ExportZPacW", "ExportZPrjW", "ExportDXFW", "ExportTechPackW", "ExportThumbnail3DW", "ExportSnapshot3DW", "ExportCustomViewSnapshotW", 
+            "ExportRenderingImageW", "ExportSingleColorwayRenderingImageW", "GetFileNameOnRenderingPropertyW", "ExportGarmentInformationW", "ExportTurntableVideoW", 
+            "ExportAnimationVideoW", "GetColorwayNameListW", "GetAvatarNameListW", "GetSizeNameListW", "ExportTechPackToStreamW", "ExportGarmentInformationToStreamW"
+-	Added api calls with 'wstring' type for Unicode in Fabric API:
+            "ExportZFabW", "ExportFabricW", "AddFabricW", "GetFirstFabricTextureNameW", "GetFirstFabricTextureNameW", "ChangeFabricWithJsonW", "ImportXtexFileW", "ApplyXtexFileW", 
+            "GetFabricIndexW", "GetFabricNameW", "GetAPIMetaDataW", "SetAPIMetaDataW", "ChangeMetaDataValueForFabric", "GetColorwayFabricInfoW"
+-	Added api calls with 'wstring' type for Unicode in Import API: "ImportFileW", "ImportZprjW"
+-	Added api calls with 'wstring' type for Unicode in Pattern API: "GetPatternIndexW", "GetPatternInformationW"
+-	Added api calls with 'wstring' type for Unicode in Utility API: 
+	"GetCLOTemporaryFolderPathW", "DisplayMessageBoxW", "GetProjectNameW", "GetProjectFilePathW", "SetProgressW", "GetCustomViewInformationW", "GetMetaDataForCurrentGarmentW"	
+-	Added "stringToMD5" in Utility API
+
+[v2.4, Nov, 2019]
+- 	Added "ExportCustomViewSnapshot" in Export API
+-	Revised "ExportTechPack" & "ExportTechPackW" paramaeters in ExportAPI to use ExportTechpackOption in CloApiData.h
+-	Added "DeleteFabric" in FabricAPI
+-	Added "IsDefaultTab" in LibraryWindowInterface 
+-	Added "GetTabName" in LibraryWindowInterface 
+-	Improved "GetThumbnailInCLOFile" in Utility API (for .sst, .zfab, .zpac, .zprj files)
+-	Removed "CallbackFromWebKit" from ExportPlugin sample
+-	Removed "EditFabricWithJson" from Fabric API (please use ChangeFabricFromJson for this purpose)
+
+[v2.3, Oct 2, 2019]
+-	Added 'bExportTexture' parameter for "ExportTechPack" call in Export API
+-	Renamed and implemented  "AddFabric" from "AddFabricFromJson"
+-	Added "ChangeFabricWithJson" in Fabric API
+-	Added "AssignFabricToPattern" in Fabric API
+-	Added "GetThumbnailInCLOFile" in Utility API
+-	Added "ImportXTexFile" in Fabric API
+-	Added "ApplyXTexFile" in Fabric API
+-	Updated Library Window Implementation project for the Sample Demo
+-	Added "GetMetaDataForCurrentGarment", "SetMetaDataForCurrentGarment", and "ChangeMetaDataValueForCurrentGarment" into Utility API
+
+[v2.2, May 21, 2019]
+-	Added "GetFirstFabricTextureName" in Fabric API
+-	Added "GetFileNameOnRenderingProperty" in Export API
+-	Added "GetTotalRenderImagePaths" in Export API
+-	Added "GetCurrentRenderImagePaths" in Export API
+-	Added "ExportGarmentInformationToStream" in Export API
+-	Fixed the issue that the CLO does not handle properly the file path with "\\" style for Export API, Fabric API, Import API
+              so that Windows shared folder path (\\Nasc_xxx\\... ) can be used in API calls.
+-	Added "ExportZprj" call with bCaptureThumbnail flags in Export API
+-	Added "GetColorwayCount", "GetCurrentColorwayIndex" and "SetCurrentColorwayIndex" calls in Utility API
+
+[v2.1, May 2, 2019]
+- 	Added "trimList" to Tech Pack spec.
+
+[v2.0, Apr, 2019]
+-	New API architecture. 
+              Reconstructed all of API structure to interface/implmentation architecture.
+
+-	Support for Thin/Thick mesh option for "ExportOBJ" function
+-	Added "ImportZPRJ" function in ImportAPI.h
+-	Added "Fabric API" with interfaces / implementations below:
+	"GetFabricCount"
+	"GetCurrentFabricIndex"
+	"ExportZFab"
+	"AddFabricFromJson" interface / not implmented
+
+- 	Added "ExportDXF" function without dialog
+
+[v1.2]
+- 	Added "GetProjectFilePath" function in UtilityAPI.h
+- 	Updated the version of Tech Pack Spec and ExportTechPack function so that it can return the followings as well.
+		- Measurement on Garment (name, length, snapshot)
+		- Graphic/Artwork snapshot with measurement
+		- Print layout snapshot
+		- Pattern info(name, snapshot)
+		- Avatar info(name, gender)
+[v1.1]
+- 	Added "GetProjectName" function in UtilityAPI.h
+- 	Added "GetMajorVersion", "GetMinorVersion", "GetPatchVersion" functions in UtilityAPI.h
+
+[v1.0]
+-	Removed Class Macros like EXPORT_API, IMPORT_API. Now you need to remove all the Class Macros in your previous codes (ex. EXPORT_API.ExportOBJ() -> ExportOBJ())
+-	Added ExportOBJ functions with options. If "options" is given, it exports OBJ according to options, not allowing user for selecting options in Export Dialog. Please refer to ImportExportOption class in ExportAPI.h for setting options.
+-	Added UtilityAPI.h. It includes some utility functions like "Show a message box on CLO for debugging purpose".
+- 	Fixed the bug which the bitmap images are not exported when exporting OBJ with the scene including .ai images. 
+-	Added Plug-in debug log. Please read the manual for details.
+-	Added GetObjectNameTreeToAddAction() and GetPositionIndexToAddAction() functions so that the plug-in developer can control the default action menu position to add the plug-in feature into CLO by using them. 
+-	Revised 'API' folder name to 'CloApi'
+
+[v0.9]
+-	CLO UI changes for Library Windows Interface
+
+[v0.8] 
+-	Changed Messaging protocol in Web API: Changed the specification in JS message to allow the 'empty value'; for now, you'd not use space inside delimiter but '\n' or '\r' only; you'd find the sample in the test.html file inside the package file.
+-	Added   GetColorwayNameList   function in ExportAPI
+-	Added   GetAvatarCount   function in ExportAPI
+-	Added   GetAvatarNameList   function in ExportAPI
+-	Added   GetSizeCount   function in ExportAPI
+-	Added   GetCurrentSizeIndex   function in ExportAPI
+-	Added   GetSizeNameList   function in ExportAPI
+-	Added   Texture List keys with AI file path   on TechPack
+
+[v0.7] 
+-	Added Library Window API sample code
+-	Minor bug fixes on TechPack
+
+[v0.6]
+-	Added LibraryWindowAPI
+-	Updated Techpack JSON spec to v1.2; code while implementing.
+
+[v0.5]
+-	Added WEBKIT API
+-	Revised REST API (See comments in   RESTAPI.h   for details)
+
+[v0.4]
+-	Added   ExportZPac   API
+-	Added   ExportZPrj   API
+-	Added   ExportOBJ   API
+-	Added   ExportDXF   API
+-	Added   ExportRenderingImage   API
+-	Added   ExportTurntableVideo   API
+-	Added   ExportAnimationVideo   API
+
+[v0.3]
+-	Added   ExportSnapshot3D   API
+-	Added   ExportGarmentInfromation   API
+-	Changed the API name from   ExportBOM   to   ExportTechPack  
+
+[v0.2]
+-	Added REST API
+-	Added   ExportThumbnail3D   API
+-	Plug-in Manager in CLO SW
+-	Changed the name of the project file from   ExportBOM   to   ExportPlugin   as the project will cover all Export API samples
+
+[v0.1]
+-	Added   ExportBOM   API

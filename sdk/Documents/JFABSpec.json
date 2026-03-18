@@ -1,0 +1,373 @@
+{
+  /// API metadata for fabric from Library Windows <-> other systems integration
+  "qsAPIMetaData": "{\n\n}",              // API meta data (JSON string in ASCII)
+  "qsAPIMetaDataUTF8": "{\n\n}",          // API meta data (JSON string in UTF-8)
+
+  /// fabric yardage
+  "fHeight": 10000.0,                     // the total length of fabric used for patterns in the print layout mode
+  "fWidth": 1117.6,                       // the width of fabric used for patterns in the print layout mode
+
+  /// fabric properties
+  "bIsBackFaceMaterial": false,           // if false, the material assigned on the front face will be used for the back face as well. if true, another material will be assigned for the back face.
+  "bIsSideFaceMaterial": false,           // if false, the material assigned on the front face will be used for the side face as well. if true, another material will be assigned for the side face.
+
+  "qsFabricName": "�Ŀ��",               // Fabric Name (ASCII)
+  "qsFabricNameUTF8": "테스트",          // Fabric Name (UTF-8)
+
+  "uiFabricVersion": 100,                 // Fabric Version
+  "uiVersion": 100,                       // File Version (same with Fabric Version in JFAB)
+
+  /// fabric contents
+  "fabricContent": "None",                // Classification - Content (ASCII)
+  "fabricContentUTF8": "None",            // Classification - Content (UTF-8)
+  "fabricType": "None",                   // Classification (ASCII)
+  "fabricTypeUTF8": "None",               // Classification (UTF-8)
+
+  /// materials info per colorway
+  "mapColorwayInfo": {
+    "iSubSize": 1,                        // the number of colorways for fabric
+    "listColorwayInfo": [                 // list of colorway
+      { // the first colorway
+        "listFaceMaterial": [             // list of face material for the first colorway (for the old file version of CLO application) - deprecated
+          {
+            "bFixedAspectRatio": false,
+            "bMetal": false,
+            "bUseMetalnessRoughnessPBR": true,
+            "enOpaqueMode": 0,
+            "fAbbe": 25.0,
+            "fAmbientIntensity": 0.257132,
+            "fBaseColorMult": 1.0,
+            "fBumpMode": 1.0,
+            "fCameraLightIntensity": 0.0,
+            "fDesaturated": 0.0,
+            "fDiffuseIntensity": 0.819608,
+            "fEnvironmentLightIntensity": 1.0,
+            "fFlakesNum": 0.0,
+            "fFogColorMult": 1.0,
+            "fFrontColorMult": 1.0,
+            "fFurBend": 0.0,
+            "fFurCurlAngle": 0.0,
+            "fFurCurlRadius": 0.0,
+            "fFurCurlRadiusVar": 0.0,
+            "fFurDensity": 0.0,
+            "fFurDirectionVar": 0.0,
+            "fFurGlossiness": 0.0,
+            "fFurGlossinessBoost": 0.0,
+            "fFurGravity": 10.0,
+            "fFurGravityVar": 0.0,
+            "fFurGravityVectorX": 0.0,
+            "fFurGravityVectorY": -1.0,
+            "fFurGravityVectorZ": 0.0,
+            "fFurKnots": 0.0,
+            "fFurLength": 0.0,
+            "fFurLengthVar": 0.0,
+            "fFurMelanin": 0.0,
+            "fFurPheoMelanin": 0.0,
+            "fFurSoftness": 0.0,
+            "fFurTaper": 0.0,
+            "fFurThickness": 0.0,
+            "fFurThicknessVar": 0.0,
+            "fGlossiness": 0.5,
+            "fIOR": 1.5,
+            "fMetalness": 0.0,
+            "fReflectionIntensity": 0.15,
+            "fSSSDensityScale": 0.0,
+            "fSSSMix": 0.0,
+            "fSSSRadius1": 0.0,
+            "fSSSRadius2": 0.0,
+            "fSSSRadius3": 0.0,
+            "fSSSWeight1": 0.0,
+            "fSSSWeight2": 0.0,
+            "fSSSWeight3": 0.0,
+            "fShininess": 28.7632,
+            "fSideColorMult": 1.0,
+            "fZero": 0.0,
+            "flakesSaturationVar": 0.0,
+            "iFurType": 9,
+            "iMaterialType": 0,
+            "iNormalIntensityInPercentage": 0,
+            "iRoughnessUIType": 0,
+            "iShadowGray": 0,
+            "iShadowIntensity": 0,
+            "iVersion": 1,
+            "listTexture": [
+              {
+                "bColorInverted": true,
+                "bDisplacementKeepContinuity": false,
+                "enImageType": 4,
+                "enMagFilter": 9729,
+                "enMinFilter": 9987,
+                "enType": 0,
+                "enWrapS": 10497,
+                "enWrapT": 10497,
+                "fDisplacementAmount": 3.0,
+                "fDisplacementEdgeLength": 4.0,
+                "fDisplacementShift": 0.0,
+                "fDisplacementWaterLevel": 0.0,
+                "fIntensity": 1.0,
+                "fSignedAngle": 0.0,
+                "qsAIFileName": "",
+                "qsAIFileNameUTF8": "",
+                "qsAIFilePageNo": -842150451,
+                "qsFileName": "D:/CLO Library/TextureColorTest/���������ܬڬ� �ѱ� ?????.jpg",
+                "qsFileNameUTF8": "D:/CLO Library/TextureColorTest/Русский 한국 العرب.jpg",
+                "v2Size": [ 65.0324, 65.0324 ],
+                "v2Translation": [ 0.0, 0.0 ],
+                "v4BorderColor": [ 0.0, 0.0, 0.0, 0.0 ]
+              }
+            ],
+            "mapAmbientColor": {
+              "qsName": "(None)",
+              "qsNameUTF8": "(None)",
+              "v4Color": [ 0.257132, 0.257132, 0.257132, 1.0 ]
+            },
+            "mapBaseColor": {
+              "qsName": "(None)",
+              "qsNameUTF8": "(None)",
+              "v4Color": [ 1.0, 1.0, 1.0, 1.0 ]
+            },
+            "mapDiffuseColor": {
+              "qsName": "(None)",
+              "qsNameUTF8": "(None)",
+              "v4Color": [ 0.819608, 0.819608, 0.819608, 1.0 ]
+            },
+            "mapElement": {
+              "qsName": "�Ŀ��_FRONT_3883",
+              "qsNameUTF8": "냐오옹_FRONT_3883",
+              "uiID": 3960
+            },
+            "mapEmissionColor": {
+              "qsName": "(None)",
+              "qsNameUTF8": "(None)",
+              "v4Color": [ 0.0, 0.0, 0.0, 1.0 ]
+            },
+            "mapFlakesColor": {
+              "qsName": "(None)",
+              "qsNameUTF8": "(None)",
+              "v4Color": [ 1.0, 1.0, 1.0, 1.0 ]
+            },
+            "mapSSSColor1": {
+              "qsName": "(None)",
+              "qsNameUTF8": "(None)",
+              "v4Color": [ 1.0, 1.0, 1.0, 1.0 ]
+            },
+            "mapSSSColor2": {
+              "qsName": "(None)",
+              "qsNameUTF8": "(None)",
+              "v4Color": [ 1.0, 1.0, 1.0, 1.0 ]
+            },
+            "mapSSSColor3": {
+              "qsName": "(None)",
+              "qsNameUTF8": "(None)",
+              "v4Color": [ 1.0, 1.0, 1.0, 1.0 ]
+            },
+            "uiBlendFuncDst": 771,
+            "uiBlendFuncSrc": 770,
+            "v3BaseColor": [ 1.0, 1.0, 1.0 ],
+            "v4Ambient": [ 0.257132, 0.257132, 0.257132, 1.0 ],
+            "v4BlendColor": [ 0.0, 0.0, 0.0, 1.0 ],
+            "v4Diffuse": [ 0.819608, 0.819608, 0.819608, 1.0 ],
+            "v4Emission": [ 0.0, 0.0, 0.0, 1.0 ],
+            "v4Specular": [ 0.075, 0.075, 0.075, 1.0 ]
+          }
+        ],
+        "listMaterial2D": [                   // list of material2d(Front/Back/Side face material) for the first colorway (for the curruent version of CLO application)
+          {                                   // the first material2d for the first colorway
+            "listFaceMaterial": [             // front face material for the first material2d in the first colorway
+              {
+                "bFixedAspectRatio": false,   // Lock aspect ratio in Fabric Property - Material - Transformation
+
+                /// rendering parameters for V-Ray or 3D real time renderer 
+https://support.clo3d.com/hc/en-us/articles/360001526568-Express-Fur-ver4-2-0-and-Above-
+
+                "bMetal": false,		          // if true, the material is metal
+                "bUseMetalnessRoughnessPBR": true, // if true, the material is applied as PBR. always true.
+                "enOpaqueMode": 0, 
+                "fAbbe": 25.0,                // the scattering value for jewelry model in V-Ray.
+                "fAmbientIntensity": 0.257132, // ambient intensity
+                "fBaseColorMult": 1.0,        // multiplier for diffuse color
+                "fBumpMode": 1.0,             // if 2.0, the material is using Normal Map from normal map file. if 1.0, the material is using auto-generated Normal Map from the image file. if 0.0, the material does not use the normal map
+                "fCameraLightIntensity": 0.0, // constant in software. do not change this value
+                "fDesaturated": 0.0,          // if 1.0f, the material is desaturated.
+                "fDiffuseIntensity": 0.819608, // constant in software. do not change this value
+                "fEnvironmentLightIntensity": 1.0,  // constant in software. do not change this value
+                "fFlakesNum": 0.0,            // the density of glitter material
+                "fFogColorMult": 1.0,         // transparency for glasses or gems
+                "fFrontColorMult": 1.0,       // multiplier for the diffuse intensity for velvet models
+                "fFurBend": 0.0,              // bending cofficient for Furs per gravity
+                "fFurCurlAngle": 0.0,         // Curl Angle for Furs
+                "fFurCurlRadius": 0.0,        // Curl Radius for Furs
+                "fFurCurlRadiusVar": 0.0,     // variance for Fur Curl Radius 
+                "fFurDensity": 0.0,           // Density for Furs
+                "fFurDirectionVar": 0.0,      // variance of Direction for Furs
+                "fFurGlossiness": 0.0,        // Glossiness for Furs
+                "fFurGlossinessBoost": 0.0,   // additional Glossiness for Furs
+                "fFurGravity": 10.0,          // Strength to pull fur towards Z-axis
+                "fFurGravityVar": 0.0,        // uniformed or irregular gravity effect
+                "fFurGravityVectorX": 0.0,    // Manually apply the Gravity value to X-axis
+                "fFurGravityVectorY": -1.0,   // Manually apply the Gravity value to Y-axis
+                "fFurGravityVectorZ": 0.0,    // Manually apply the Gravity value to Z-axis
+                "fFurKnots": 0.0,             // the number of knots in a strand for fur
+                "fFurLength": 0.0,            // the length of the fur. Higher the value is, longer the fur is.
+                "fFurLengthVar": 0.0,         // express uniformed or irregular fur length. Higher the value is, irregular the fur length is. On the other hand, lower the value is, unifome the length is.
+                "fFurMelanin": 0.0,           // Configure saturation of the fur’s original color. Higher the Melanin value is, saturated the color is. On the other hand, lower the value is, light the color is.
+                "fFurPheoMelanin": 0.0,       // Configure how reddish the fur is. Higher the PheoMelanin value is, redder the fur is. PheoMelanin value is applied in proportion to Melanin value, PheoMelanin value is not counted when the Melanin value is 0.
+                "fFurSoftness": 0.0,          // Express smoothness of the fur. Higher the Softness value is, smoother the fur is. On the other hand, lower the value is, rougher the fur is.
+                "fFurTaper": 0.0,             // the value to taper strands in the furs
+                "fFurThickness": 0.0,         // Configure the thickness of a single thread of the fur.
+                "fFurThicknessVar": 0.0,      // Express uniformed or irregular fur thickness
+                "fGlossiness": 0.5,           // glosiness
+                "fIOR": 1.5,                  // Index of refraction
+                "fMetalness": 0.0,            // metalness values varies from 0: non-metal to 1: metal.
+                "fReflectionIntensity": 0.15, // intensity for reflection
+                "fSSSDensityScale": 0.0,      // N/A, reserved value
+                "fSSSMix": 0.0,               // N/A, reserved value
+                "fSSSRadius1": 0.0,           // N/A, reserved value
+                "fSSSRadius2": 0.0,           // N/A, reserved value
+                "fSSSRadius3": 0.0,           // N/A, reserved value
+                "fSSSWeight1": 0.0,           // N/A, reserved value
+                "fSSSWeight2": 0.0,           // N/A, reserved value
+                "fSSSWeight3": 0.0,           // N/A, reserved value
+                "fShininess": 28.7632,        // deprecated
+                "fSideColorMult": 1.0,        // multiplier for diffuse color in case the normal vector for the mesh is perpendicular to the direction of camera
+                "fZero": 0.0,                 // deprecated
+                "flakesSaturationVar": 0.0,   // randomness for glittering
+                "iFurType": 9,                // preset index for Fur type 
+                "iMaterialType": 0,           // preset index for Material type
+                "iNormalIntensityInPercentage": 0, // intensity for Normal Map
+                "iRoughnessUIType": 0,        // 0 - use intensity value for roughness, 1 - use map for roughness
+                "iShadowGray": 0,             // gray value for shadow for the texture in case Desaturation is turned on
+                "iShadowIntensity": 0,        // intensity for shadow for the texture in case Desaturation is turned on
+                "iVersion": 1,                // CLO file version for the material
+                "listTexture": [              // list of textures for this material
+                  {
+                    "bColorInverted": true,   // true - using roughness map, false - using glossiness map or traditional specular map
+                    "bDisplacementKeepContinuity": false, //DisplacementKeepContinuity value for V-Ray
+                    "enImageType": 4,         // N/A, in-house variable
+                    "enMagFilter": 9729,      // N/A, in-house variable
+                    "enMinFilter": 9987,      // N/A, in-house variable
+                    "enType": 0,              // N/A, in-house variable
+                    "enWrapS": 10497,         // N/A, in-house variable
+                    "enWrapT": 10497,         // N/A, in-house variable
+                    "fDisplacementAmount": 3.0, //DisplacementAmount value for V-Ray
+                    "fDisplacementEdgeLength": 4.0, //DisplacementEdgeLength for V-Ray
+                    "fDisplacementShift": 0.0, //DisplacementShift value for V-Ray
+                    "fDisplacementWaterLevel": 0.0, //DisplacementWaterLevel value for V-Ray
+                    "fIntensity": 1.0,        // intensity for glossiness map and/or normal map
+                    "fSignedAngle": 0.0,      // rotation angle for the texture transformation
+                    "qsAIFileName": "",       // original file path for the .ai file(in ASCII)
+                    "qsAIFileNameUTF8": "",   // original file path for the .ai file(in UTF-8)
+                    "qsAIFilePageNo": -842150451, // page number for the .ai file
+                    "qsFileName": "D:/CLO Library/TextureColorTest/���������ܬڬ� �ѱ� ?????.jpg", // bitmap file path used for this texture (ASCII)
+                    "qsFileNameUTF8": "D:/CLO Library/TextureColorTest/Русский 한국 العرب.jpg", // bitmap file path used for this texture (UTF-8)
+                    "v2Size": [ 65.0324, 65.0324 ],   // image size for this texture(width, height)
+                    "v2Translation": [ 0.0, 0.0 ],    // translation vector for this texture
+                    "v4BorderColor": [ 0.0, 0.0, 0.0, 0.0 ] // deprecated
+                  }
+                ],
+                "mapAmbientColor": {          // ambient color with name
+                  "qsName": "(None)",         // color name (ASCII)
+                  "qsNameUTF8": "(None)",     // color name (UTF-8)
+                  "v4Color": [ 0.257132, 0.257132, 0.257132, 1.0 ] // rgba
+                },
+                "mapBaseColor": {             // base color
+                  "qsName": "(None)",         // color name (ASCII)
+                  "qsNameUTF8": "(None)",     // color name (UTF-8)
+                  "v4Color": [ 1.0, 1.0, 1.0, 1.0 ] // rgba
+                },
+                "mapDiffuseColor": {          // diffuse color
+                  "qsName": "(None)",         // color name (ASCII)
+                  "qsNameUTF8": "(None)",     // color name (UTF-8)
+                  "v4Color": [ 0.819608, 0.819608, 0.819608, 1.0 ] // rgba
+                },
+                "mapElement": {               // information for this material
+                  "qsName": "�Ŀ��_FRONT_3883",      // name for the material (ASCII)
+                  "qsNameUTF8": "테스트_FRONT_3883", // name for the material (UTF-8)
+                  "uiID": 3960                       // element ID been used in CLO when saving this material
+                },
+                "mapEmissionColor": {         // deprecated
+                  "qsName": "(None)",
+                  "qsNameUTF8": "(None)",
+                  "v4Color": [ 0.0, 0.0, 0.0, 1.0 ]
+                },
+                "mapFlakesColor": {           // glittering color
+                  "qsName": "(None)",         // color name (ASCII)
+                  "qsNameUTF8": "(None)",     // color name (UTF-8)
+                  "v4Color": [ 1.0, 1.0, 1.0, 1.0 ] // rgba
+                },
+                "mapSSSColor1": {             // N/A, reserved value
+                  "qsName": "(None)",
+                  "qsNameUTF8": "(None)",
+                  "v4Color": [ 1.0, 1.0, 1.0, 1.0 ]
+                },
+                "mapSSSColor2": {             // N/A, reserved value
+                  "qsName": "(None)",
+                  "qsNameUTF8": "(None)",
+                  "v4Color": [ 1.0, 1.0, 1.0, 1.0 ]
+                },
+                "mapSSSColor3": {             // N/A, reserved value
+                  "qsName": "(None)",
+                  "qsNameUTF8": "(None)",
+                  "v4Color": [ 1.0, 1.0, 1.0, 1.0 ]
+                },
+                "uiBlendFuncDst": 771,        // blendfunction destination / glew enumerator
+                "uiBlendFuncSrc": 770,        // blendfunction source / glew enumerator
+                "v3BaseColor": [ 1.0, 1.0, 1.0 ],                   // deprecated
+                "v4Ambient": [ 0.257132, 0.257132, 0.257132, 1.0 ], // deprecated
+                "v4BlendColor": [ 0.0, 0.0, 0.0, 1.0 ],             // deprecated
+                "v4Diffuse": [ 0.819608, 0.819608, 0.819608, 1.0 ], // deprecated
+                "v4Emission": [ 0.0, 0.0, 0.0, 1.0 ],               // deprecated
+                "v4Specular": [ 0.075, 0.075, 0.075, 1.0 ]          // deprecated
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "uiCurrentCoordinationIndex": 0                                 // current colorway index
+  },
+  "mapPhysical": {
+    "enFabricType": 0,                                              // Fabric Type (0 - Default, 1 - Silk, 2 - Cotton, 3 - Wool, 4 - Denim, 5 - Leather, 6 - Cashmere, 7 - Satin, 8 - Spandex, 9 - Rayon, 10 - Linen, 11 - Taffeta, 12 - Polyester, 13 - Terrycloth, 14 - Flannel, 15 - Burlap, 16 - Rubber)
+    "fBhK": 2000.0,                                                 // "Bending-Bias": Bending value along the Bias in the fabric property
+    "fBhLR": 0.8,                                                   // "Buckling Ratio-Bias": Buckling ratio for the Bias Direction
+    "fBuK": 2000.0,                                                 // "Bending-Weft": Bending value to the Weft  in the fabric property
+    "fBuLR": 0.8,                                                   // "Buckling Ratio-Weft": Buckling ratio for the Weft Direction
+    "fBucklingStiffnessH": 0.8,                                     // "Buckling Stiffness-Bias": Buckling Stiffness along the Bias
+    "fBucklingStiffnessU": 0.8,                                     // "Buckling Stiffness-Weft": Buckling Stiffness along the Weft
+    "fBucklingStiffnessV": 0.8,                                     // "Buckling Stiffness-Warp": Buckling Stiffness along the Warp
+    "fBvK": 2000.0,                                                 // "Bending-Warp": Bending value to Warp in the fabric property
+    "fBvLR": 0.8,                                                   // "Buckling Ratio-Warp": Buckling ratio for the Warp Direction
+    "fDensity": 0.0003,                                             // "Density": density 
+    "fFriction": 0.03,                                              // "Friction": friction
+    "fHK": 10000.0,                                                 // "Shear": stretch value for Bais direction
+    "fIDS": 0.0001,                                                 // "Internal Damping": internal damping scale
+    "fSuK": 100000.0,                                               // "Stretch-Weft": stretch value for Weft direction
+    "fSvK": 100000.0,                                               // "Stretch-Warp": stretch value for Warp direction
+    "fThickness": 0.5,                                              // (default value - 0.5): thickness for the fabric 
+    "listNonlinearHK": [],                                          // generated array from Emulator with an algorithm
+    "listNonlinearSuK": [],                                         // generated array from Emulator with an algorithm
+    "listNonlinearSvK": [],                                         // generated array from Emulator with an algorithm
+    "mapRawData": {                                                 // read-only raw data from fabric kit.
+      "MVBiasForceList": [],
+      "MVBiasLengthList": [],
+      "MVWarpForceList": [],
+      "MVWarpLengthList": [],
+      "MVWeftForceList": [],
+      "MVWeftLengthList": [],
+      "fContactDIstanceBias1": 0.0,
+      "fContactDIstanceBias2": 0.0,
+      "fContactDIstanceWarp1": 0.0,
+      "fContactDIstanceWarp2": 0.0,
+      "fContactDIstanceWeft1": 0.0,
+      "fContactDIstanceWeft2": 0.0,
+      "fFabricBendingType": 0,
+      "fMassDensity": 0.0,
+      "fRectangleSampleSizeHeight": 30.0,
+      "fRectangleSampleSizeWidth": 200.0,
+      "fThicknessDensity": 0.0
+    },
+    "qsPhysicalPropertyName": "Default",                            // physical property name (in ASCII)
+    "qsPhysicalPropertyNameUTF8": "Default"                         // physical property name (in UTF-8)
+  }
+}
+

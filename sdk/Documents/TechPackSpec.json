@@ -1,0 +1,485 @@
+{
+  // Change Log
+  // v1.7 : materials added for ButtonHead, ButtonHole, Zipper
+  // v1.7 : added "customViewCount"
+  // v1.8 : added "bonded" and "bond type" for each pattern
+  // v1.9 : added "graphicType" from 'Classification for PrintTexture' in CLO SW
+  // v2.0 : moved "graphiType" to "type" in graphicList for the 'Classification for PrintTexture' in CLO SW
+  // v2.1 : added Zipper Stopper in CLO SW
+  // v2.1 : added "itemNo" in Fabric/Button/Buttonhole/Topstitch/Zipper/Graphic/Trim in CLO SW
+  // v2.1 : added "sliderApiMetaData, pullerApiMetaData, topStopperApiMetaData, bottomStopperApiMetaData" for ZipperList
+  // v2.2 : added "colorwayCostInfo" in Fabric, ButtonHead, ButtonHole
+  // v2.2 : added "spi", "threadThicknessUnit" in subStitchList for topStitchList; change "threadThickness" from mm to "threadThicknessUnit"
+  // v2.3 : added "usedAsTrim" in trimList for OBJ/Trim, graphicInstanceList, patternList, topstitchList
+  // v2.4 : remove "usedAsTrim". Instead, added the item with "usedAsTrim" to "trimList"
+  // v2.4 : added "colorwayList" in trimList
+  // v2.4 : added "isFlippedHorizontally", "isFlippedVertically", "rotationAngle" per graphic added. "artworkForLaser" and its related attributes for compatibility with Jeanologia DigitalWash added.
+  // v2.5 : added "uuid" in Colorway, GarmentMeasurment, Fabric, ButtonHead, ButtonHole, Topstitch, Zipper, Graphic, Trim, Avatar and Garment itself
+  // v2.5 : added "itemNo" in Garment itself
+  // v2.5 : added "closetId" in Fabric, ButtonHead, ButtonHole, Trim, Avatar and Garment itself
+  // v2.5 : added "closetIdSlider", "closetIdPuller", "closetIdTopStopper", "closetIdBottomStopper" for zipper slider, puller, topStopper, bottomStopper respectively.
+  // v2.6 : removed most of detail information such as fabric consumption, button size. Jeanologia integration related attributes remain. This information will be exported if graphics' classification is set as "Wash (Jeanologia)"
+  // v2.7 : added "model" in avatarList and always export avatarList
+  // v2.8 : added "roughness", "reflectionIntensity", "metalness" in Material
+  // v2.9 : added "type" in "trimList" field
+  // v3.0 : changed the name "subStitchList" to "subTopStitchList"
+  // v3.0 : added "materialFront" and "materialBack" in subTopStitchList
+  // v3.0 : added "materialList" includes all material data
+  // v3.2 : added "print" in Fabric
+  // v3.2 : added "imageTransformation" in Material
+  // v3.5 : added "userSettings"
+  // v3.6 : added "textureListForCLOSET"
+  // v3.7 : added "dllName"
+  // v3.8 : added "mainColor"
+  // v3.9 : added "thumbnailInHighResolution"
+  // v4.1 : added "isEditableCustomAvatar"
+  // v4.8 : added "visible" in graphicList
+  // v5.0 : added "symmetryPatternId" in patternList
+  // v5.1 : added "boundingBoxList" in patternList, trimList, zipperList, and buttonHeadList
+  // v5.3 : change the colorway system.
+  // v5.6 : moved "imageTransformation" in material to "textureListForCLOSET"/"textureList" in material, added "bIsBackFaceMaterial", "bUseFrontColorOnBack", "bIsSideFaceMaterial", "bUseFrontColorOnSide" in fabric. moved "visible" in "graphicListColorway" to "graphicInstanceList"
+  // v5.8 : id synchronization of original file, rest and output.json
+  // v6.1 : added "isResizableAvatar"
+  // v6.2 : added "materialId" in (style)ListColorway. "fabricMaterialId", "buttonHeadMaterialId", "buttonHoleMaterialId", "topStitchMaterialId", "trimMaterialId" in "patternListColorway" to distinguish duplicate Id
+  // v6.3 : added "bottomSliderThumbnail", "bottomSliderMaterial", "bottomPullerThumbnail", "bottomPullerMaterial" in "zipperInfoMap"
+  // v7.1 : added "iFileType" in material, include all material in trim, zipper obj
+  // v7.2 : added Grading UUID
+  // v7.3 : closet 2d viewer
+  // v7.4 : added Size List with UUID
+  // v7.5 : [reverted] added "rollWidth" and "rollWidthUnit" in "colorwayList"/"fabricListColorway"
+  // v7.6 : added "size", "totalWidth", "teethWidth" in "zipperList"
+
+  "version": 760, // means v7.6 (CURRENT_TECHPACK_JSON_VERSION in BOMJsonCreator.cpp also must be updated too)
+
+  "dllName": "20221205_gradingerrdetection_sbsar(#41055)", // [v3.7] the DLL name used to create the json file
+
+  "userSettings": { // [v3.5] user settings
+    "lengthUnit": "mm", // one of {"mm", "cm", "in"}
+    "useLigneSize": false, // booleans, use ligne (L) for button width
+    "currencyUnit": "USD"
+  },
+
+  "apiMetaData": [ // [v1.6] garment meta data map applied (from Library Window Interface, CLO API)
+
+  ],
+
+  "avatarList": [ // [v1.3]
+    {
+      "id": 3895,
+      "isTechPack": true, // [v7.1]
+      "isTrimItem": false, // [v7.1]
+      "trimType": "buckle", // [v7.1] "type"(v2.9) in trimList -> "trimType"
+      "thumbnail": "avatar_0.png", // [v7.1]
+      "name": "default_avatar",
+      "itemNo": "None", // [v2.1]
+      "uuid": "5b5e34b8c7ee4598b354673dc754ec5b", // [v2.5]
+      "loadedUuid": "5b5e34b8c7ee4598b354673dc754ec5b", // [v7.1]
+      "closetId": "5b5e34b8c7ee4598b354673dc754ec5b", // [v2.5]
+      "gender": 0, // 0 : male, 1 : female, 2: kids, -1: unknown
+      "model": "Mara" // [v2.7]
+    }
+  ],
+
+  "itemNo": "2020ss pants 03", // [v2.5]
+  "zpacPath": "output.ZPac", // [v1.1] zpac file path (this file is created only via CLO API)
+  "zprjPath": "output.ZPrj", // [v1.1] zprj file path (this file is created only via CLO API) -> [v1.2] "projectFilePath" -> "zprjPath"
+
+  "thumbnail": [ // [v1.0]
+    "thumbnail_o.png", // front thumbnail
+    "thumbnail_l.png", // left thumbnail
+    "thumbnail_b.png", // back thumbnail
+    "thumbnail_r.png" // [v1.4] right thumbnail
+  ],
+  "thumbnailWithPatternMark": [ // [v1.4]
+    "thumbnailWithPatternMark0.png", // front
+    "thumbnailWithPatternMark1.png", // left
+    "thumbnailWithPatternMark2.png", // back
+    "thumbnailWithPatternMark3.png" // right
+  ],
+  "thumbnailInHighResolution": "colorway0_thumbnail_1024.png", // [v3.9] front, 1024x1024
+  "patternLayoutThumbnail": "patternLayoutThumbnail.png", // [v1.3] Thumbnail with Pattern Mark
+  //"colorway": [], // [v1.0] deprecated since v1.2
+  "currentColorwayIndex": 0, // [v1.2]
+  "colorwayList": [ // [v1.2]
+    {
+      "buttonHeadListColorway": [
+        {
+          "boundingBoxList": [ // [v5.1] boundingBoxList
+            {
+              "width": 20,
+              "depth": 3.22861,
+              "height": 20,
+              "position": [ -534.122, 1848.09, 203.114 ]
+            },
+            {
+              "width": 20,
+              "depth": 3.22861,
+              "height": 20,
+              "position": [ -179.902, 1850.73, 203.114 ]
+            }
+          ]
+        }
+      ],
+      "id": 3814,
+      "name": "colorway 0",
+      "mainColor": [ // [v3.8] the representative color of colorway. the average color of the front material of fabric with the largest area by colorway.
+        0.705882,
+        0.137255,
+        0.164706
+      ],
+      "uuid": "5b5e34b8c7ee4598b354673dc754ec5b", // [v2.5]
+      "thumbnail": [ // colorway thumbnail front, left, back, right in order.
+        "colorway0_thumbnail0.png", // front
+        "colorway0_thumbnail1.png", // left
+        "colorway0_thumbnail2.png", // back
+        "colorway0_thumbnail3.png" // [v1.4] right
+      ],
+      "thumbnailWithFabricMark": [ // [v1.4] colorway thumbnail with fabric mark. front, left, back, right in order.
+        "colorway0_thumbnailWithFabricMark0.png", // front
+        "colorway0_thumbnailWithFabricMark1.png", // left
+        "colorway0_thumbnailWithFabricMark2.png", // back
+        "colorway0_thumbnailWithFabricMark3.png" // right
+      ],
+      "thumbnailWithTrimMark": [ // [v1.4] colorway thumbnail with trim mark. front, left, back, right in order.
+        "colorway0_thumbnailWithTrimMark0.png", // front
+        "colorway0_thumbnailWithTrimMark1.png", // left
+        "colorway0_thumbnailWithTrimMark2.png", // back
+        "colorway0_thumbnailWithTrimMark3.png" // right
+      ],
+      "thumbnailWithAvatar": [ // colorway thumbnail with avatar
+        "colorway0_thumbnailWithAvatar0.png", // front
+        "colorway0_thumbnailWithAvatar1.png", // side
+        "colorway0_thumbnailWithAvatar2.png", // back
+        "colorway0_thumbnailWithAvatar3.png" // [v1.4] right
+      ],
+      "trimListColorway": [
+        {
+          "boundingBoxList": [ // [v5.1] boundingBoxList
+            {
+              "width": 43.8173,
+              "depth": 4.13606,
+              "height": 61.0001,
+              "position": [ -758.733, 1807.98, 202.058 ]
+            }
+          ]
+        },
+        {
+          "boundingBoxList": [ // [v5.1] boundingBoxList
+            {
+              "width": 43.8175,
+              "depth": 4.13606,
+              "height": 61.0004,
+              "position": [ 42.493, 1810.36, 202.058 ]
+            }
+          ]
+        }
+      ],
+      "patternLayoutThumbnailWithFabricMark": "patternLayoutThumbnailWithFabricMark.png", // [v1.4]
+      "patternLayoutThumbnailWithTrimMark": "patternLayoutThumbnailWithTrimMark.png" // [v1.4]
+    }
+  ],
+  // todo : sewingList
+
+  "patternList": [ // [v1.2]
+    {
+      "boundingBoxList": [ // [v5.1] boundingBoxList
+        {
+          "width": 500,
+          "height": 500.001,
+          "depth": 0.000183105,
+          "position": [ -686.747, 1668.67, 200 ]
+        }
+      ],
+      "id": 3815,
+      "name": "Neck_Knit",
+      "itemNo": "None", // [v2.1]
+      "isTrimItem": true, // [v7.1]
+      "thumbnail": "pattern2d_0.png", // [v1.3] thumbnail without texture rendered.
+      "symmetryPatternId": 1375, // [v5.0] symmetryPatternId
+      "thumbnailWithTexture": "pattern2dWithTexture_0.png" // [v1.4]
+      // todo : "thumbnail3d" :
+      // todo : elastic, seam taping..
+      // todo : shrinkage, physical properties..
+    },
+    {
+      "boundingBoxList": [ // [v5.1] boundingBoxList
+        {
+          "width": 500,
+          "height": 500.001,
+          "depth": 0.000167847,
+          "position": [ -29.4926, 1671.06, 200 ]
+        }
+      ],
+      "id": 1375,
+      "name": "Neck_Knit",
+      "itemNo": "None", // [v2.1]
+      "thumbnail": "pattern2d_1.png", // [v1.3] thumbnail without texture rendered.
+      "symmetryPatternId": 3815, // [v5.0] symmetryPatternId
+      "thumbnailWithTexture": "pattern2dWithTexture_1.png" // [v1.4]
+      // todo : "thumbnail3d" :
+      // todo : elastic, seam taping..
+      // todo : shrinkage, physical properties..
+    }
+  ],
+
+  "fabricList": [ // [v1.2]
+    {
+      "id": 3816,
+      "name": "NECK RIBBING",
+      "itemNo": "None", // [v2.1]
+      "colorwayList": [ // should have the same size as "colorwayList" in root
+        {
+          "thumbnail": "colorway0_fabric0.png",
+          "printLayoutImage": "colorway0_fabricPrintLayout0.png", // [v1.3]
+          "rollWidth": 44.2, // roll width in inch
+          "rollYardage": 0.129389, // length of fabric roll consumed by patterns (in yardage)
+          "materialFront": {
+            "id": 2948,
+            "imageColor": [ // [v1.6] the average color of image and baseColor
+              0.705882,
+              0.137255,
+              0.164706
+            ],
+            "baseColor": [
+              0.705882,
+              0.137255,
+              0.164706
+            ],
+            "baseColorName": "blue",
+            "opacity": 0.5, // [0.0, 1.0]
+            "roughness": 0.5, // [v2.8] [0.0, 1.0]
+            "reflectionIntensity": 0.5, //[v2.8] [0.0, 1.0]
+            "metalness": 0.5, //[v2.8] [0.0, 1.0]
+            "textureListForCLOSET": [ // [v3.6] texture image files and relative paths (for CLOSET)
+              {
+                "filePath": "0.jpg",
+                "aiFilePath": "baseColorMap.ai", // if ai file was used..
+                "type": 0, // 0: base color map, 1: (n/a), 2: (n/a), 3: normal map, 4: (n/a), 5: (n/a), 6: diffuse overaly map, 7: specular overaly map
+                // 8: (n/a), 9: (n/a), 10: glossiness map, 11: metalness map, 12: reflect map, 13: refract map, 14: fur length map, 15: fur thickness map, 16: fur density map
+                "imageTransformation": { // [v3.2]
+                  "width": 476.1, // unit is mm.
+                  "widthPercentage": 100.0, // the ratio of the current width to the original width
+                  "height": 398.3, // unit is mm
+                  "heightPercentage": 50.0, // the ratio of the current height to the original height
+                  "angle": 180.0, // unit is degree
+                  "translationX": 37.4, // unit is mm. translation in x axis
+                  "translationY": 32.1 // unit is mm. translation in y axis
+                }
+              }
+            ],
+            "textureList": [ // [v1.2] texture image files and relative paths (for CLO API)
+              {
+                "filePath": "baseColorMap.jpg",
+                "aiFilePath": "baseColorMap.ai", // if ai file was used..
+                "type": 0, // 0: base color map, 1: (n/a), 2: (n/a), 3: normal map, 4: (n/a), 5: (n/a), 6: diffuse overaly map, 7: specular overaly map
+                // 8: (n/a), 9: (n/a), 10: glossiness map, 11: metalness map, 12: reflect map, 13: refract map, 14: fur length map, 15: fur thickness map, 16: fur density map
+                "imageTransformation": { // [v3.2]
+                  "width": 476.1, // unit is mm.
+                  "widthPercentage": 100.0, // the ratio of the current width to the original width
+                  "height": 398.3, // unit is mm
+                  "heightPercentage": 50.0, // the ratio of the current height to the original height
+                  "angle": 180.0, // unit is degree
+                  "translationX": 37.4, // unit is mm. translation in x axis
+                  "translationY": 32.1 // unit is mm. translation in y axis
+                }
+              }
+            ],
+            "type": "Fabric_Matte"
+          },
+          "materialBack": {}, // same format as "materialFront"
+          "materialSide": {}, // same format as "materialFront"
+          "bIsBackFaceMaterial": true, // [v5.6]
+          "bUseFrontColorOnBack": false, // [v5.6]
+          "bIsSideFaceMaterial": false, // [v5.6]
+          "bUseFrontColorOnSide": true // [v5.6]
+        }
+      ],
+      "print": { // [v3.2] if exists
+        "id": 3836,
+        "name": "NECK RIBBING Prnt",
+        "colorwayList": [] // same format as the above "colorwayList"
+      },
+      "apiMetaData": [ // [v1.6] fabric meta data map applied (from Library Window Interface, CLO API)
+
+      ]
+    }
+  ],
+
+
+  "graphicList": [ // [v1.2] Not shared over patterns at the moment. As someday it will be shared over patterns, we decided to separate "graphic" from "pattern".
+    {
+      "id": 3821,
+      "name": "3 Stripes, Rubberized Print_4",
+      "itemNo": "None", // [v2.1]
+      "isTechPack": true, // [v7.1]
+      "artworkForLaser": false, //[v2.6] When "type" of graphic is "Wash (Jeanologia)", then true.
+      "artworkSize": { // [v2.6] Contains washing graphic size information.
+        "height": 80, // unit is mm.
+        "heightSizeRatio": 100, // [v1.1] the ratio of graphic height to the original image height
+        "width": 996.292, // unit is mm.
+        "widthSizeRatio": 339.106 // [v1.1] the ratio of graphic width to the original image width
+      },
+      "isFlippedHorizontally": false, //[v2.6] If the graphic is flipped on the x-axis, then true. Exported if the graphic is set as "Wash (Jeanologia)"
+      "isFlippedVertically": false, //[v2.6] If the graphic is flipped on the y-axis, then true. Exported if the graphic is set as "Wash (Jeanologia)"
+      "rotationAngle": -30, //[v2.6] Unit is degree. Plus(+) is counter-clockwise. Minus(-) is clockwise. Exported if the graphic is set as "Wash (Jeanologia)"
+      "placementForLaser": "Back Pattern", //[v2.6] used only when "artworkForLaser" : true.
+      "displacementForLaser": [ -104.986, -694.403 ], //[v2.6] used only when "artworkForLaser" : true. Unit is mm.
+      "fabricShrinkFactorForLaser": { //[v2.6] used only when "artworkForLaser" : true.
+        "x": 1.0,
+        "y": 1.0
+      },
+      "colorwayList": [ // should have the same size as "colorwayList" in root
+        {
+          "visible": false, // booleans
+          "thumbnail": "colorway0_graphic0.png",
+          "thumbnailWithMeasurement": "colorway0_graphicWithMeasurement0.png", // [v1.4] Measurement to Outline
+          "thumbnailWithMeasurementToCenter": "colorway0_graphicWithMeasurementToCenter0.png", // [v1.6] Measurement to Center
+          "materialFront": {}, // same format as "materialFront" in fabricList
+          "materialBack": {}, // same format as "materialFront" in fabricList
+          "materialSide": {} // same format as "materialFront" in fabricList
+        }
+      ]
+    }
+  ],
+
+  "buttonHeadList": [ // [v1.2]
+    {
+      "id": 3817,
+      "name": "Default Button",
+      "itemNo": "None", // [v2.1]
+      "isTechPack": true, // [v7.1]
+      "isTrimItem": false, // [v7.1]
+      "trimType": "buckle", // [v7.1] "type"(v2.9) in trimList -> "trimType"
+      "colorwayList": [ // should have the same size as "colorwayList" in root
+        {
+          "thumbnail": "colorway0_buttonhead1.png",
+          "bodyMaterial": {}, // [v1.7] // same format as "materialFront" in fabricList
+          "threadMaterial": {} // [v1.7] // same format as "materialFront" in fabricList
+        }
+      ]
+    }
+  ],
+  "buttonHoleList": [ // [v1.2]
+    {
+      "id": 3818,
+      "name": "Default ButtonHole",
+      "itemNo": "None", // [v2.1]
+      "isTechPack": true, // [v7.1]
+      "colorwayList": [ // should have the same size as "colorwayList" in root
+        {
+          "thumbnail": "colorway0_buttonhole1.png",
+          "material": {} // [v1.7] // same format as "materialFront" in fabricList
+        }
+      ]
+    }
+  ],
+
+  "topStitchList": [ // [v1.2]
+    {
+      "id": 3819,
+      "name": "Default TopStitch",
+      "itemNo": "None", // [v2.1]
+      "isTechPack": true, // [v7.1]
+      "isTrimItem": false, // [v7.1]
+      "trimType": "buckle", // [v7.1] "type"(v2.9) in trimList -> "trimType"
+      "colorwayList": [ // should have the same size as "colorwayList" in root
+        {
+          "thumbnail": "colorway0_topstitch1.png"
+        }
+      ],
+      "subTopStitchList": [ // each topStitch has 0~5 subStitch
+        {
+          "colorwayList": [ // should have the same size as "colorwayList" in root
+            {
+              "thumbnail": "colorway0_topstitch1_stitch1.png",
+              "materialFront": {}, // same format as "materialFront" in fabricList
+              "materialBack": {} // same format as "materialFront" in fabricList
+            }
+          ]
+        }
+      ]
+
+    }
+  ],
+
+  "zipperList": [ // [v1.2] Not shared at the moment. As someday it will be shared, we decided to separate "zipper" from "pattern".
+    {
+      "id": 3820,
+      "name": "Zipper_1",
+      "itemNo": "None", // [v2.1]
+      "isTechPack": true, // [v7.1]
+      "size": "#3", // [v7.6]
+      "totalWidth": "10.0", // [v7.6] display unit
+      "teethWidth": "10.0", // [v7.6] display unit
+      "boundingBoxList": [ // [v5.1] boundingBoxList. Only applies to zipper teeth pattern
+        {
+          "width": 4.50009,
+          "height": 497.492,
+          "depth": 6.10352e-05,
+          "position": [ -434.497, 1669.93, 200 ]
+        }
+      ],
+      "pullerApiMetaData": { // [v2.1]
+
+      },
+      "sliderApiMetaData": { // [v2.1]
+
+      },
+      "topStopperApiMetaData": { // [v2.1]
+
+      },
+      "bottomStopperApiMetaData": { // [v2.1]
+
+      },
+      "colorwayList": [ // should have the same size as "colorwayList" in root
+        {
+          "pullerThumbnail": "colorway0_zipper_puller0.png", // [v1.0]
+          "sliderThumbnail": "colorway0_zipper_slider0.png", // [v1.0]
+          "teethThumbnail": "colorway0_zipper_teeth0.png", // [v1.0]
+          "topStopperThumbnail": "colorway0_zipper_topstopper0.png", // [v2.1]
+          "bottomStopperThumbnail": "colorway0_zipper_bottomstopper0.png", // [v2.1]
+          "pullerMaterial": {}, // [v1.7] // same format as "materialFront" in fabricList
+          "sliderMaterial": {}, // [v1.7] // same format as "materialFront" in fabricList
+          "teethMaterial": {}, // [v1.7] // same format as "materialFront" in fabricList
+          "topStopperMaterial": {}, // [v2.1] // same format as "materialFront" in fabricList
+          "bottomStopperMaterial": {} // [v2.1] // same format as "materialFront" in fabricList
+        }
+      ]
+    }
+  ],
+
+  "trimList": [ // [v1.5] for OBJ files loaded as trim.
+    {
+      "id": 3821,
+      "name": "trimOBJ_1",
+      "itemNo": "None", // [v2.1]
+      "trimType": "buckle", // [v7.1] "type"(v2.9) in trimList -> "trimType"
+      "isTechPack": true, // [v7.1]
+      "apiMetaData": [ // [v1.6] trim meta data map applied (from Library Window Interface, CLO API)
+      ],
+      "colorwayList": [ // [v2.4]
+        {
+          "thumbnail": "colorway0_trim_0.png",
+          "material": {} // same format as "materialFront" in fabricList
+        }
+      ]
+    }
+  ],
+
+
+  "gradingList": [ // [v1.3] the grading list for this garment
+    {
+      "name": "L",
+      "uuid": "{e6d4ea82-b1fd-4199-8d4d-fd43c1fd09be}" // [v7.2] Grading UUID
+    }
+  ],
+
+  "currentGradingIndex": 0, // [v1.3] the current grading index for this garment in "gradingList"
+
+  "materialList": [
+    {} // // same format as "materialFront" in fabricList
+  ],
+
+  "isEditableCustomAvatar": false, // [v4.1]
+  "isResizableAvatar": false // [v6.1]
+}

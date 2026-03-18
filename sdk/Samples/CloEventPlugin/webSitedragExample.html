@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File drag and drop example</title>
+    <style>
+        #fileDraggable {
+            width: 200px;
+            height: 100px;
+            background-color: #3498db;
+            color: white;
+            text-align: center;
+            line-height: 100px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: bold;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="fileDraggable" draggable="true">Drag file</div>
+
+<script>
+    const fileDraggable = document.getElementById("fileDraggable");
+
+    fileDraggable.addEventListener("dragstart", (e) => {
+        // set dataTransfer
+        e.dataTransfer.setData("text/uri-list", "cloapi://example.com");    // There must be one value in url with cloapi as domain.
+        e.dataTransfer.setData("text/plain", "Please enter content data such as json, xml, plain text, etc.");
+        //e.dataTransfer.setData("text/plain", "C:\\Users\\user\\Downloads\\defaultFabric.zfab");
+    });
+</script>
+
+</body>
+</html>
+

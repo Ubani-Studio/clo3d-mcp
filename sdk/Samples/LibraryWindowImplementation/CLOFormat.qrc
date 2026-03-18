@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix=":/CLOFormat">
+    <file>Resources/btn_icon_open_none.svg</file>
+    <file>Resources/btn_icon_refresh_none.svg</file>
+  </qresource>
+</RCC>
