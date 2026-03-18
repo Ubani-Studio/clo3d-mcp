@@ -1,26 +1,15 @@
-# CLO3D MCP Plugin
-# File-based communication server that runs inside CLO3D.
-# Load in Script Editor and run it.
-# Polls a shared directory for JSON commands from the MCP server.
-
 import json
 import os
+import sys
 import time
-import traceback
+import threading
 
 try:
-    import threading
-    HAS_THREADING = True
-except ImportError:
-    HAS_THREADING = False
-
-# CLO3D API modules (available when running inside CLO3D)
-try:
-    import CLO_API_EXT as export_api
-    import CLO_API_FAB as fabric_api
-    import CLO_API_IMP as import_api
-    import CLO_API_PAT as pattern_api
-    import CLO_API_UTL as utility_api
+    import export_api
+    import fabric_api
+    import import_api
+    import pattern_api
+    import utility_api
     IN_CLO3D = True
 except ImportError:
     IN_CLO3D = False
@@ -489,8 +478,7 @@ def process_command(data):
         return json.dumps({
             "id": req_id,
             "status": "error",
-            "message": str(e),
-            "traceback": traceback.format_exc(),
+            "message": str(type(e).__name__) + ": " + str(e),
         })
 
 
@@ -557,10 +545,6 @@ def start():
 
     if _server_running:
         print("[CLO MCP] Already running")
-        return
-
-    if not HAS_THREADING:
-        print("[CLO MCP] ERROR: threading module not available in this Python build")
         return
 
     _server_running = True
