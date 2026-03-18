@@ -1,0 +1,61 @@
+# Ignore CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ignore build directories
+/build/
+/bin/
+/dist/
+
+# Ignore compiled object files
+*.o
+*.obj
+
+# Ignore compiled dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Ignore compiled static libraries
+*.lib
+*.a
+
+# Ignore executable files
+*.exe
+*.out
+
+# Ignore IDE and editor files
+*.swp
+*.swo
+*.user
+*.ncb
+*.sdf
+*.suo
+*.vcxproj*
+*.vcproj*
+*.idea/
+*.vscode/
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+
+# Ignore other system-specific files
+*.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+*.whl
+.venv/
+venv/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
