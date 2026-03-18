@@ -1,18 +1,21 @@
 """
-CLO3D TCP socket connection client.
+CLO3D file-based connection client.
 
-Manages a persistent socket connection to the CLO3D plugin server.
-Sends JSON commands over newline-delimited protocol and parses responses.
+Communicates with the CLO3D plugin via a shared directory.
+The MCP server writes request.json, the plugin reads it, processes,
+and writes response.json. Both sides use atomic writes (temp + rename).
+
+On WSL, auto-detects the Windows temp directory for the shared path.
+Override with CLO3D_MCP_DIR environment variable if needed.
 """
 
 import json
-import socket
-import uuid
+import os
 import time
+import uuid
 
-DEFAULT_HOST = "127.0.0.1"
-DEFAULT_PORT = 9877
-TIMEOUT = 180  # seconds — simulation/export can take minutes
+TIMEOUT = 180  # seconds: simulation/export can take minutes
+POLL_INTERVAL = 0.05  # seconds between file checks
 MAX_RETRIES = 3
 RETRY_DELAY = 1.0
 
@@ -21,124 +24,178 @@ class CLO3DConnectionError(Exception):
     pass
 
 
+def _find_comm_dir():
+    """Determine the shared communication directory.
+
+    Priority:
+    1. CLO3D_MCP_DIR env var (explicit override)
+    2. Windows %TEMP%/clo3d_mcp via WSL mount (auto-detect)
+    3. System temp dir fallback
+    """
+    # 1. Explicit override
+    env_dir = os.environ.get("CLO3D_MCP_DIR")
+    if env_dir:
+        return env_dir
+
+    # 2. Auto-detect WSL: look for Windows user temp via /mnt/c
+    # CLO3D runs on Windows, so the plugin writes to Windows %TEMP%
+    if os.path.isdir("/mnt/c/Users"):
+        # Try to find the Windows user from /mnt/c/Users
+        try:
+            users = [
+                d
+                for d in os.listdir("/mnt/c/Users")
+                if d not in ("Public", "Default", "Default User", "All Users")
+                and os.path.isdir(os.path.join("/mnt/c/Users", d))
+            ]
+            for user in users:
+                temp_dir = os.path.join(
+                    "/mnt/c/Users", user, "AppData", "Local", "Temp", "clo3d_mcp"
+                )
+                # If the dir already exists (plugin is running), use it
+                if os.path.isdir(temp_dir):
+                    return temp_dir
+            # If none found yet, use the first real user
+            if users:
+                return os.path.join(
+                    "/mnt/c/Users", users[0], "AppData", "Local", "Temp", "clo3d_mcp"
+                )
+        except OSError:
+            pass
+
+    # 3. Fallback: local temp
+    return os.path.join(os.environ.get("TEMP", "/tmp"), "clo3d_mcp")
+
+
 class CLO3DConnection:
-    """Singleton TCP client for the CLO3D plugin socket server."""
+    """File-based IPC client for the CLO3D plugin."""
 
     _instance = None
 
-    def __new__(cls, host=DEFAULT_HOST, port=DEFAULT_PORT):
+    def __new__(cls, comm_dir=None):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self, host=DEFAULT_HOST, port=DEFAULT_PORT):
+    def __init__(self, comm_dir=None):
         if self._initialized:
             return
-        self.host = host
-        self.port = port
-        self._socket = None
-        self._buffer = b""
+        self.comm_dir = comm_dir or _find_comm_dir()
+        self.request_file = os.path.join(self.comm_dir, "request.json")
+        self.response_file = os.path.join(self.comm_dir, "response.json")
         self._initialized = True
 
     @property
     def connected(self):
-        return self._socket is not None
+        """Check if the communication directory exists (plugin is likely running)."""
+        return os.path.isdir(self.comm_dir)
 
     def connect(self):
-        """Establish connection to CLO3D plugin."""
-        if self._socket:
-            return
-
-        try:
-            self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._socket.settimeout(TIMEOUT)
-            self._socket.connect((self.host, self.port))
-            self._buffer = b""
-        except (ConnectionRefusedError, socket.timeout, OSError) as e:
-            self._socket = None
+        """Ensure the communication directory exists."""
+        if not os.path.isdir(self.comm_dir):
             raise CLO3DConnectionError(
-                f"Cannot connect to CLO3D on {self.host}:{self.port}. "
-                f"Is CLO3D running with the MCP plugin loaded? Error: {e}"
+                "Cannot find CLO3D communication directory at: " + self.comm_dir + ". "
+                "Is CLO3D running with the MCP plugin loaded?"
             )
 
     def disconnect(self):
-        """Close the connection."""
-        if self._socket:
-            try:
-                self._socket.close()
-            except OSError:
-                pass
-            self._socket = None
-            self._buffer = b""
-
-    def _ensure_connected(self):
-        """Connect if not already connected."""
-        if not self._socket:
-            self.connect()
-
-    def _recv_line(self):
-        """Read until we get a newline-terminated JSON response."""
-        while b"\n" not in self._buffer:
-            try:
-                chunk = self._socket.recv(65536)
-                if not chunk:
-                    self.disconnect()
-                    raise CLO3DConnectionError("CLO3D closed the connection")
-                self._buffer += chunk
-            except socket.timeout:
-                raise CLO3DConnectionError(
-                    f"Timed out waiting for CLO3D response ({TIMEOUT}s). "
-                    "The operation may still be running in CLO3D."
-                )
-            except (ConnectionResetError, BrokenPipeError, OSError) as e:
-                self.disconnect()
-                raise CLO3DConnectionError(f"Connection lost: {e}")
-
-        line, self._buffer = self._buffer.split(b"\n", 1)
-        return line.decode("utf-8")
+        """No-op for file-based connection (kept for API compatibility)."""
+        pass
 
     def send_command(self, command_type, params=None, retries=MAX_RETRIES):
         """
         Send a command to CLO3D and return the result.
 
-        Args:
-            command_type: The command name (e.g., "get_project_info")
-            params: Optional dict of parameters
-            retries: Number of reconnection attempts on failure
-
-        Returns:
-            The result dict from the response
-
-        Raises:
-            CLO3DConnectionError: On connection/communication failure
+        Writes request.json, waits for response.json, returns the parsed result.
         """
         request = {
             "id": str(uuid.uuid4()),
             "type": command_type,
             "params": params or {},
         }
-        payload = json.dumps(request) + "\n"
 
         for attempt in range(retries):
             try:
-                self._ensure_connected()
-                self._socket.sendall(payload.encode("utf-8"))
-                response_str = self._recv_line()
-                response = json.loads(response_str)
-
-                if response.get("status") == "error":
-                    error_msg = response.get("message", "Unknown error from CLO3D")
-                    raise CLO3DConnectionError(f"CLO3D error: {error_msg}")
-
-                return response.get("result", {})
-
+                return self._do_send(request)
             except CLO3DConnectionError:
                 if attempt < retries - 1:
-                    self.disconnect()
                     time.sleep(RETRY_DELAY)
                     continue
                 raise
+
+    def _do_send(self, request):
+        """Write request, poll for response, return result."""
+        # Ensure comm dir exists
+        if not os.path.isdir(self.comm_dir):
+            raise CLO3DConnectionError(
+                "CLO3D communication directory not found: " + self.comm_dir + ". "
+                "Is CLO3D running with the MCP plugin loaded?"
+            )
+
+        # Clean up any stale response file
+        if os.path.exists(self.response_file):
+            try:
+                os.remove(self.response_file)
+            except OSError:
+                pass
+
+        # Write request atomically
+        payload = json.dumps(request)
+        tmp_file = self.request_file + ".tmp"
+        with open(tmp_file, "w") as f:
+            f.write(payload)
+
+        # Atomic rename
+        if os.path.exists(self.request_file):
+            os.remove(self.request_file)
+        os.rename(tmp_file, self.request_file)
+
+        # Poll for response
+        start_time = time.time()
+        while True:
+            elapsed = time.time() - start_time
+            if elapsed > TIMEOUT:
+                raise CLO3DConnectionError(
+                    "Timed out waiting for CLO3D response (" + str(TIMEOUT) + "s). "
+                    "The operation may still be running in CLO3D."
+                )
+
+            if os.path.exists(self.response_file):
+                try:
+                    with open(self.response_file, "r") as f:
+                        data = f.read()
+
+                    # Delete response file
+                    try:
+                        os.remove(self.response_file)
+                    except OSError:
+                        pass
+
+                    if not data.strip():
+                        time.sleep(POLL_INTERVAL)
+                        continue
+
+                    response = json.loads(data)
+
+                    # Verify this response matches our request
+                    if response.get("id") != request["id"]:
+                        # Stale response from a previous request, keep waiting
+                        time.sleep(POLL_INTERVAL)
+                        continue
+
+                    if response.get("status") == "error":
+                        error_msg = response.get("message", "Unknown error from CLO3D")
+                        raise CLO3DConnectionError("CLO3D error: " + error_msg)
+
+                    return response.get("result", {})
+
+                except (json.JSONDecodeError, ValueError):
+                    # File might be partially written, wait and retry
+                    time.sleep(POLL_INTERVAL)
+                    continue
+
+            time.sleep(POLL_INTERVAL)
 
     def ping(self):
         """Test the connection. Returns True if CLO3D responds."""
@@ -153,9 +210,9 @@ class CLO3DConnection:
 _connection = None
 
 
-def get_connection(host=DEFAULT_HOST, port=DEFAULT_PORT):
+def get_connection(comm_dir=None):
     """Get or create the global CLO3D connection."""
     global _connection
     if _connection is None:
-        _connection = CLO3DConnection(host, port)
+        _connection = CLO3DConnection(comm_dir)
     return _connection

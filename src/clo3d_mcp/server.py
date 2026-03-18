@@ -1,8 +1,8 @@
 """
-CLO3D MCP Server — FastMCP server exposing CLO3D tools to LLMs.
+CLO3D MCP Server: FastMCP server exposing CLO3D tools to LLMs.
 
 Bridges Claude/Cursor and CLO3D via the Model Context Protocol.
-Communicates with the CLO3D plugin over TCP socket (port 9877).
+Communicates with the CLO3D plugin through a shared file directory.
 """
 
 from mcp.server.fastmcp import FastMCP

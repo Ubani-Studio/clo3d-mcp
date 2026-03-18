@@ -1,23 +1,18 @@
-"""
-CLO3D MCP Plugin: Socket server that runs inside CLO3D.
-
-Drag this file into CLO3D's Script Editor and run it.
-Opens a non-blocking TCP socket server on port 9877, listens for JSON
-commands from the MCP server, executes CLO3D API calls, returns results.
-
-Protocol:
-  Request:  {"id": "uuid", "type": "command_name", "params": {...}}
-  Response: {"id": "uuid", "status": "success", "result": {...}}
-  Error:    {"id": "uuid", "status": "error", "message": "..."}
-"""
+# CLO3D MCP Plugin
+# File-based communication server that runs inside CLO3D.
+# Load in Script Editor and run it.
+# Polls a shared directory for JSON commands from the MCP server.
 
 import json
-import socket
-import threading
+import os
 import time
 import traceback
-import os
-import tempfile
+
+try:
+    import threading
+    HAS_THREADING = True
+except ImportError:
+    HAS_THREADING = False
 
 # CLO3D API modules (available when running inside CLO3D)
 try:
@@ -31,9 +26,11 @@ except ImportError:
     IN_CLO3D = False
     print("[CLO MCP] WARNING: Not running inside CLO3D. API calls will fail.")
 
-HOST = "127.0.0.1"
-PORT = 9877
-BUFFER_SIZE = 65536
+# Communication directory
+COMM_DIR = os.path.join(os.environ.get("TEMP", os.path.expanduser("~")), "clo3d_mcp")
+REQUEST_FILE = os.path.join(COMM_DIR, "request.json")
+RESPONSE_FILE = os.path.join(COMM_DIR, "response.json")
+POLL_INTERVAL = 0.1
 
 _server_running = False
 _server_thread = None
@@ -47,7 +44,7 @@ def handle_ping(params):
     return {"pong": True, "in_clo3d": IN_CLO3D}
 
 
-# ── Scene ──────────────────────────────────────────────────────────────────
+# -- Scene --
 
 def handle_get_project_info(params):
     name = utility_api.GetProjectName()
@@ -61,7 +58,7 @@ def handle_get_project_info(params):
     return {
         "project_name": name,
         "project_path": path,
-        "clo_version": f"{major}.{minor}.{patch}",
+        "clo_version": str(major) + "." + str(minor) + "." + str(patch),
         "pattern_count": pattern_count,
         "fabric_count": fabric_count,
         "colorway_count": colorway_count,
@@ -86,17 +83,17 @@ def handle_save_file(params):
 
 
 def handle_get_garment_info(params):
-    tmp = os.path.join(tempfile.gettempdir(), "clo_garment_info.json")
+    tmp = os.path.join(os.environ.get("TEMP", "."), "clo_garment_info.json")
     export_api.ExportGarmentInformation(tmp)
     if os.path.exists(tmp):
-        with open(tmp, "r", encoding="utf-8") as f:
+        with open(tmp, "r") as f:
             data = json.load(f)
         os.remove(tmp)
         return {"garment_info": data}
     return {"garment_info": None}
 
 
-# ── Pattern ────────────────────────────────────────────────────────────────
+# -- Pattern --
 
 def handle_get_pattern_count(params):
     count = pattern_api.GetPatternCount()
@@ -158,11 +155,11 @@ def handle_flip_pattern(params):
 
 
 def handle_create_pattern(params):
-    points = params["points"]  # list of [x, y] or [x, y, type]
+    points = params["points"]
     point_tuples = []
     for p in points:
         x, y = p[0], p[1]
-        vtype = p[2] if len(p) > 2 else 0  # 0=straight, 2=spline, 3=bezier
+        vtype = p[2] if len(p) > 2 else 0
         point_tuples.append((x, y, vtype))
     result = pattern_api.CreatePatternWithPoints(point_tuples)
     return {"created": True, "point_count": len(point_tuples), "result": result}
@@ -173,7 +170,7 @@ def handle_get_arrangement_list(params):
     return {"arrangements": arr_list}
 
 
-# ── Fabric ─────────────────────────────────────────────────────────────────
+# -- Fabric --
 
 def handle_get_fabric_count(params):
     count = fabric_api.GetFabricCount()
@@ -204,7 +201,7 @@ def handle_replace_fabric(params):
 def handle_assign_fabric(params):
     fabric_index = params["fabric_index"]
     pattern_index = params["pattern_index"]
-    option = params.get("assign_option", 1)  # 1=current colorway, 2=all unlinked, 3=all linked
+    option = params.get("assign_option", 1)
     result = fabric_api.AssignFabricToPattern(fabric_index, pattern_index, option)
     return {"assigned": result, "fabric_index": fabric_index, "pattern_index": pattern_index}
 
@@ -230,7 +227,7 @@ def handle_delete_fabric(params):
     return {"deleted": result, "fabric_index": fabric_index}
 
 
-# ── Export ─────────────────────────────────────────────────────────────────
+# -- Export --
 
 def handle_export_obj(params):
     file_path = params["file_path"]
@@ -306,7 +303,7 @@ def handle_export_tech_pack(params):
     return {"exported": bool(result), "file_path": result or file_path}
 
 
-# ── Import ─────────────────────────────────────────────────────────────────
+# -- Import --
 
 def handle_import_file(params):
     file_path = params["file_path"]
@@ -327,7 +324,7 @@ def handle_import_fabric(params):
     return {"imported": True, "fabric_index": index, "file_path": file_path}
 
 
-# ── Simulation ─────────────────────────────────────────────────────────────
+# -- Simulation --
 
 def handle_simulate(params):
     steps = params.get("steps", 100)
@@ -336,12 +333,12 @@ def handle_simulate(params):
 
 
 def handle_set_simulation_quality(params):
-    quality = params["quality"]  # integer quality level
+    quality = params["quality"]
     utility_api.SetSimulationQuality(quality)
     return {"quality": quality}
 
 
-# ── Colorway ───────────────────────────────────────────────────────────────
+# -- Colorway --
 
 def handle_get_colorways(params):
     count = utility_api.GetColorwayCount()
@@ -382,7 +379,7 @@ def handle_delete_colorway(params):
     return {"deleted": True, "colorway_index": index}
 
 
-# ── Avatar ─────────────────────────────────────────────────────────────────
+# -- Avatar --
 
 def handle_get_avatars(params):
     count = export_api.GetAvatarCount()
@@ -414,15 +411,12 @@ def handle_get_avatar_genders(params):
 # ---------------------------------------------------------------------------
 
 HANDLERS = {
-    # Internal
     "ping": handle_ping,
-    # Scene
     "get_project_info": handle_get_project_info,
     "new_project": handle_new_project,
     "open_file": handle_open_file,
     "save_file": handle_save_file,
     "get_garment_info": handle_get_garment_info,
-    # Pattern
     "get_pattern_count": handle_get_pattern_count,
     "get_pattern_list": handle_get_pattern_list,
     "get_pattern_info": handle_get_pattern_info,
@@ -433,7 +427,6 @@ HANDLERS = {
     "flip_pattern": handle_flip_pattern,
     "create_pattern": handle_create_pattern,
     "get_arrangement_list": handle_get_arrangement_list,
-    # Fabric
     "get_fabric_count": handle_get_fabric_count,
     "get_fabric_list": handle_get_fabric_list,
     "add_fabric": handle_add_fabric,
@@ -442,7 +435,6 @@ HANDLERS = {
     "set_fabric_color": handle_set_fabric_color,
     "get_fabric_for_pattern": handle_get_fabric_for_pattern,
     "delete_fabric": handle_delete_fabric,
-    # Export
     "export_obj": handle_export_obj,
     "export_fbx": handle_export_fbx,
     "export_glb": handle_export_glb,
@@ -451,20 +443,16 @@ HANDLERS = {
     "export_snapshot": handle_export_snapshot,
     "export_turntable": handle_export_turntable,
     "export_tech_pack": handle_export_tech_pack,
-    # Import
     "import_file": handle_import_file,
     "import_avatar": handle_import_avatar,
     "import_fabric": handle_import_fabric,
-    # Simulation
     "simulate": handle_simulate,
     "set_simulation_quality": handle_set_simulation_quality,
-    # Colorway
     "get_colorways": handle_get_colorways,
     "set_current_colorway": handle_set_current_colorway,
     "set_colorway_name": handle_set_colorway_name,
     "copy_colorway": handle_copy_colorway,
     "delete_colorway": handle_delete_colorway,
-    # Avatar
     "get_avatars": handle_get_avatars,
     "show_hide_avatar": handle_show_hide_avatar,
     "get_avatar_genders": handle_get_avatar_genders,
@@ -472,15 +460,15 @@ HANDLERS = {
 
 
 # ---------------------------------------------------------------------------
-# Socket server
+# File-based communication
 # ---------------------------------------------------------------------------
 
 def process_command(data):
     """Parse and execute a single JSON command."""
     try:
         request = json.loads(data)
-    except json.JSONDecodeError as e:
-        return json.dumps({"id": None, "status": "error", "message": f"Invalid JSON: {e}"})
+    except (json.JSONDecodeError, ValueError) as e:
+        return json.dumps({"id": None, "status": "error", "message": "Invalid JSON: " + str(e)})
 
     req_id = request.get("id")
     cmd_type = request.get("type")
@@ -491,7 +479,7 @@ def process_command(data):
         return json.dumps({
             "id": req_id,
             "status": "error",
-            "message": f"Unknown command: {cmd_type}",
+            "message": "Unknown command: " + str(cmd_type),
         })
 
     try:
@@ -506,87 +494,56 @@ def process_command(data):
         })
 
 
-def server_loop():
-    """Non-blocking socket server loop running on a background thread."""
+def poll_loop():
+    """Poll for request files and process them."""
     global _server_running
 
-    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    server_sock.settimeout(1.0)  # 1s timeout for accept()
+    # Create comm directory
+    if not os.path.exists(COMM_DIR):
+        os.makedirs(COMM_DIR)
 
-    try:
-        server_sock.bind((HOST, PORT))
-        server_sock.listen(1)
-        print(f"[CLO MCP] Server listening on {HOST}:{PORT}")
-    except OSError as e:
-        print(f"[CLO MCP] Failed to bind: {e}")
-        _server_running = False
-        return
+    # Clean up stale files
+    for f in [REQUEST_FILE, RESPONSE_FILE]:
+        if os.path.exists(f):
+            try:
+                os.remove(f)
+            except OSError:
+                pass
 
-    client = None
-    buffer = b""
+    print("[CLO MCP] Listening for commands in: " + COMM_DIR)
 
     while _server_running:
-        # Accept new connections
-        if client is None:
-            try:
-                client, addr = server_sock.accept()
-                client.setblocking(False)
-                buffer = b""
-                print(f"[CLO MCP] Client connected from {addr}")
-            except socket.timeout:
-                continue
-            except OSError:
-                continue
-
-        # Read data from client
         try:
-            chunk = client.recv(BUFFER_SIZE)
-            if not chunk:
-                print("[CLO MCP] Client disconnected")
-                client.close()
-                client = None
-                continue
-            buffer += chunk
-        except BlockingIOError:
-            pass
-        except (ConnectionResetError, BrokenPipeError, OSError):
-            print("[CLO MCP] Client connection lost")
-            try:
-                client.close()
-            except Exception:
-                pass
-            client = None
-            continue
+            if os.path.exists(REQUEST_FILE):
+                # Read request
+                with open(REQUEST_FILE, "r") as f:
+                    data = f.read()
 
-        # Process complete messages (newline-delimited JSON)
-        while b"\n" in buffer:
-            line, buffer = buffer.split(b"\n", 1)
-            if not line.strip():
-                continue
-
-            response = process_command(line.decode("utf-8", errors="replace"))
-
-            try:
-                client.sendall((response + "\n").encode("utf-8"))
-            except (BrokenPipeError, ConnectionResetError, OSError):
-                print("[CLO MCP] Failed to send response, client lost")
+                # Delete request file
                 try:
-                    client.close()
-                except Exception:
+                    os.remove(REQUEST_FILE)
+                except OSError:
                     pass
-                client = None
-                break
 
-        time.sleep(0.01)
+                if data.strip():
+                    # Process and write response
+                    response = process_command(data)
 
-    # Cleanup
-    if client:
-        try:
-            client.close()
-        except Exception:
-            pass
-    server_sock.close()
+                    # Write to temp file first, then rename (atomic)
+                    tmp_file = RESPONSE_FILE + ".tmp"
+                    with open(tmp_file, "w") as f:
+                        f.write(response)
+
+                    # Rename to final path
+                    if os.path.exists(RESPONSE_FILE):
+                        os.remove(RESPONSE_FILE)
+                    os.rename(tmp_file, RESPONSE_FILE)
+
+        except Exception as e:
+            print("[CLO MCP] Error: " + str(e))
+
+        time.sleep(POLL_INTERVAL)
+
     print("[CLO MCP] Server stopped")
 
 
@@ -595,25 +552,29 @@ def server_loop():
 # ---------------------------------------------------------------------------
 
 def start():
-    """Start the MCP plugin socket server."""
+    """Start the MCP plugin."""
     global _server_running, _server_thread
 
     if _server_running:
-        print("[CLO MCP] Server already running")
+        print("[CLO MCP] Already running")
+        return
+
+    if not HAS_THREADING:
+        print("[CLO MCP] ERROR: threading module not available in this Python build")
         return
 
     _server_running = True
-    _server_thread = threading.Thread(target=server_loop, daemon=True)
+    _server_thread = threading.Thread(target=poll_loop, daemon=True)
     _server_thread.start()
     print("[CLO MCP] Plugin started")
 
 
 def stop():
-    """Stop the MCP plugin socket server."""
+    """Stop the MCP plugin."""
     global _server_running, _server_thread
 
     if not _server_running:
-        print("[CLO MCP] Server not running")
+        print("[CLO MCP] Not running")
         return
 
     _server_running = False
@@ -623,6 +584,6 @@ def stop():
     print("[CLO MCP] Plugin stopped")
 
 
-# Auto-start when loaded in CLO3D
+# Auto-start
 if __name__ == "__main__" or IN_CLO3D:
     start()

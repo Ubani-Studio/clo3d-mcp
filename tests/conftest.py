@@ -1,18 +1,24 @@
-"""Test fixtures — mock CLO3D socket server for unit testing."""
+"""Test fixtures: mock CLO3D file-based server for unit testing."""
 
 import json
-import socket
+import os
+import tempfile
 import threading
+import time
 import pytest
 
 
 class MockCLO3DServer:
-    """Minimal mock of the CLO3D plugin socket server."""
+    """Minimal mock of the CLO3D plugin file-based server.
 
-    def __init__(self, host="127.0.0.1", port=0):
-        self.host = host
-        self.port = port
-        self._server = None
+    Polls for request.json in a temp directory, processes commands
+    using built-in handlers, and writes response.json.
+    """
+
+    def __init__(self):
+        self.comm_dir = tempfile.mkdtemp(prefix="clo3d_mcp_test_")
+        self.request_file = os.path.join(self.comm_dir, "request.json")
+        self.response_file = os.path.join(self.comm_dir, "response.json")
         self._thread = None
         self._running = False
         self._handlers = {
@@ -53,12 +59,6 @@ class MockCLO3DServer:
         }
 
     def start(self):
-        self._server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self._server.bind((self.host, self.port))
-        self.port = self._server.getsockname()[1]  # get assigned port
-        self._server.listen(1)
-        self._server.settimeout(1.0)
         self._running = True
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._thread.start()
@@ -67,34 +67,32 @@ class MockCLO3DServer:
         self._running = False
         if self._thread:
             self._thread.join(timeout=3)
-        if self._server:
-            self._server.close()
+        # Clean up temp dir
+        for f in [self.request_file, self.response_file]:
+            if os.path.exists(f):
+                try:
+                    os.remove(f)
+                except OSError:
+                    pass
+        try:
+            os.rmdir(self.comm_dir)
+        except OSError:
+            pass
 
     def _loop(self):
         while self._running:
             try:
-                client, _ = self._server.accept()
-            except socket.timeout:
-                continue
-            except OSError:
-                break
+                if os.path.exists(self.request_file):
+                    with open(self.request_file, "r") as f:
+                        data = f.read()
 
-            client.setblocking(True)
-            client.settimeout(5.0)
-            buf = b""
+                    try:
+                        os.remove(self.request_file)
+                    except OSError:
+                        pass
 
-            while self._running:
-                try:
-                    chunk = client.recv(65536)
-                    if not chunk:
-                        break
-                    buf += chunk
-
-                    while b"\n" in buf:
-                        line, buf = buf.split(b"\n", 1)
-                        if not line.strip():
-                            continue
-                        request = json.loads(line)
+                    if data.strip():
+                        request = json.loads(data)
                         req_id = request.get("id")
                         cmd_type = request.get("type")
                         params = request.get("params", {})
@@ -109,19 +107,23 @@ class MockCLO3DServer:
                                 "status": "error",
                                 "message": f"Unknown command: {cmd_type}",
                             }
-                        client.sendall((json.dumps(resp) + "\n").encode())
-                except (socket.timeout, ConnectionResetError, BrokenPipeError, OSError):
-                    break
 
-            try:
-                client.close()
-            except OSError:
-                pass
+                        tmp = self.response_file + ".tmp"
+                        with open(tmp, "w") as f:
+                            f.write(json.dumps(resp))
+                        if os.path.exists(self.response_file):
+                            os.remove(self.response_file)
+                        os.rename(tmp, self.response_file)
+
+            except Exception as e:
+                print(f"[MockServer] Error: {e}")
+
+            time.sleep(0.02)
 
 
 @pytest.fixture
 def mock_server():
-    """Start a mock CLO3D server and yield it. Stops on teardown."""
+    """Start a mock CLO3D file server and yield it. Stops on teardown."""
     server = MockCLO3DServer()
     server.start()
     yield server

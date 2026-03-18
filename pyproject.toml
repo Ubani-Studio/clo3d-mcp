@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "clo3d-mcp"
 version = "0.1.0"
-description = "MCP server for CLO3D — AI-assisted 3D garment design"
+description = "MCP server for CLO3D: AI-assisted 3D garment design"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"

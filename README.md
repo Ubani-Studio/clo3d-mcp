@@ -19,7 +19,7 @@ One Python file, no dependencies.
 3. Open `plugin/clo3d_mcp_plugin.py`
 4. Hit **Run**
 
-You'll see `[CLO MCP] Server listening on 127.0.0.1:9877` in the console.
+You'll see `[CLO MCP] Plugin started` in the console.
 
 ### 2. Connect your AI client
 
@@ -115,26 +115,26 @@ Ask things like:
 
 Two pieces:
 
-**The plugin** (`plugin/clo3d_mcp_plugin.py`) runs inside CLO3D. It's a single Python file that opens a TCP socket on port 9877, listens for JSON commands, calls the CLO3D Python API, and sends back results. No external dependencies.
+**The plugin** (`plugin/clo3d_mcp_plugin.py`) runs inside CLO3D. It's a single Python file that polls a shared temp directory for JSON commands, calls the CLO3D Python API, and writes results back. No external dependencies, no sockets, works with CLO3D's built-in Python.
 
-**The MCP server** (`src/clo3d_mcp/`) is a Python package that connects to that socket and exposes everything as MCP tools. Any MCP-compatible client (Claude, Cursor, etc.) can use it.
+**The MCP server** (`src/clo3d_mcp/`) is a Python package that writes commands to that directory and reads responses. Any MCP-compatible client (Claude, Cursor, etc.) can use it.
 
 ```
-┌─────────────────┐     TCP/JSON      ┌──────────────────┐     CLO3D API     ┌────────┐
+┌─────────────────┐   file-based IPC  ┌──────────────────┐     CLO3D API     ┌────────┐
 │   MCP Server    │ ◄──────────────► │   CLO3D Plugin    │ ◄──────────────► │ CLO3D  │
-│   (clo3d-mcp)   │   port 9877      │  (Python script)  │                  │        │
+│   (clo3d-mcp)   │  %TEMP%/clo3d_mcp │  (Python script)  │                  │        │
 └─────────────────┘                   └──────────────────┘                  └────────┘
 ```
 
 ## Troubleshooting
 
-**"Cannot connect to CLO3D"**: Is CLO3D running? Did you run the plugin script?
-
-**Port 9877 in use**: You might have another instance open. Restart CLO3D.
+**"Cannot find CLO3D communication directory"**: Is CLO3D running? Did you run the plugin script?
 
 **Plugin errors**: Check the Script Editor console in CLO3D for Python tracebacks.
 
 **Simulation/export timeout**: These can take a while. The default timeout is 180 seconds.
+
+**Custom comm directory**: Set the `CLO3D_MCP_DIR` environment variable to override the default shared directory path.
 
 ## Requirements
 
