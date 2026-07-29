@@ -160,6 +160,8 @@ uv run clo3d-mcp
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT for the code authored here. See [LICENSE](LICENSE).
+
+`sdk/` holds CLO Virtual Fashion's interface headers and sample sources and is **not** covered by that licence: no rights in it are granted here. See [NOTICE](NOTICE). You need your own CLO3D licence.
 
 CLO3D SDK headers in `sdk/` are provided by CLO Virtual Fashion for plugin development. You need your own CLO3D license.

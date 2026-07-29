@@ -1,3 +1,12 @@
+MIT License applies to the code in this repository AUTHORED HERE.
+
+IT DOES NOT APPLY TO `sdk/`. That directory contains interface headers and
+sample sources belonging to CLO Virtual Fashion Inc. No rights in that material
+are granted by this licence, because the authors of this repository hold none to
+grant. See NOTICE, and CLO's own terms at https://legal.clo-set.com/additional-clo
+
+--------------------------------------------------------------------------------
+
 MIT License
 
 Copyright (c) 2026 Violet Sphinx

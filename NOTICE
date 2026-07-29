@@ -1,0 +1,19 @@
+Third-party material in this repository
+=======================================
+
+`sdk/` contains interface headers and sample plugin sources belonging to
+CLO Virtual Fashion Inc., not to this project. They are present only so the
+bridge can be compiled against CLO's plugin interface.
+
+They are NOT covered by this repository's MIT licence. No rights in them are
+granted here, and this project's authors have no authority to grant any. Their
+use is governed by CLO Virtual Fashion's own terms, which you accept as part of
+your CLO3D licence:
+
+  https://legal.clo-set.com/additional-clo
+
+You need your own CLO3D licence to use any of it. If you are CLO Virtual Fashion
+and want this material removed entirely, open an issue and it will be taken out.
+
+CLO's documentation PDFs and sample project files were removed on 2026-07-29.
+They ship with the SDK, so anyone entitled to build this already has them.
