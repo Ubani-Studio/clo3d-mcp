@@ -399,3 +399,119 @@ def set_current_colorway(colorway_index: int) -> dict:
         colorway_index: Zero-based index of the colorway to activate.
     """
     return _send("set_current_colorway", {"colorway_index": colorway_index})
+
+
+@mcp.tool()
+def set_colorway_name(colorway_index: int, name: str) -> dict:
+    """Rename a colorway.
+
+    Args:
+        colorway_index: Zero-based index of the colorway to rename.
+        name: New name for the colorway.
+    """
+    return _send("set_colorway_name", {"colorway_index": colorway_index, "name": name})
+
+
+@mcp.tool()
+def copy_colorway(colorway_index: int, copy_option: int = 0) -> dict:
+    """Duplicate a colorway, returning the new colorway's index.
+
+    Args:
+        colorway_index: Zero-based index of the colorway to copy.
+        copy_option: 0 = unlink all properties, 1 = unlink material properties
+            only, 2 = link all properties to the source colorway.
+    """
+    return _send("copy_colorway",
+                 {"colorway_index": colorway_index, "copy_option": copy_option})
+
+
+@mcp.tool()
+def delete_colorway(colorway_index: int) -> dict:
+    """Delete a colorway from the project.
+
+    Args:
+        colorway_index: Zero-based index of the colorway to delete.
+    """
+    return _send("delete_colorway", {"colorway_index": colorway_index})
+
+
+@mcp.tool()
+def get_avatars() -> dict:
+    """List the avatars in the current project, with names and genders."""
+    return _send("get_avatars")
+
+
+@mcp.tool()
+def get_avatar_genders() -> dict:
+    """Get the gender of each avatar in the current project."""
+    return _send("get_avatar_genders")
+
+
+@mcp.tool()
+def show_hide_avatar(show: bool = True) -> dict:
+    """Show or hide the avatar in the 3D viewport.
+
+    Args:
+        show: True to show the avatar, False to hide it.
+    """
+    return _send("show_hide_avatar", {"show": show})
+
+
+@mcp.tool()
+def import_avatar(file_path: str, apf_path: str = "") -> dict:
+    """Import an avatar into the current project.
+
+    Args:
+        file_path: Absolute path to the avatar file (.avt).
+        apf_path: Optional absolute path to an avatar pose file (.apf).
+    """
+    return _send("import_avatar", {"file_path": file_path, "apf_path": apf_path})
+
+
+@mcp.tool()
+def get_fabric_count() -> dict:
+    """Get the number of fabrics in the current project."""
+    return _send("get_fabric_count")
+
+
+@mcp.tool()
+def import_fabric(file_path: str) -> dict:
+    """Import a fabric from file, returning its new fabric index.
+
+    Args:
+        file_path: Absolute path to the fabric file (.zfab).
+    """
+    return _send("import_fabric", {"file_path": file_path})
+
+
+@mcp.tool()
+def delete_fabric(fabric_index: int) -> dict:
+    """Delete a fabric from the project.
+
+    Args:
+        fabric_index: Zero-based index of the fabric to delete.
+    """
+    return _send("delete_fabric", {"fabric_index": fabric_index})
+
+
+@mcp.tool()
+def set_simulation_quality(quality: int, simulation_mode: int = 0) -> dict:
+    """Set the simulation quality preset.
+
+    Args:
+        quality: 0 = Normal (default), 1 = Animation (stable),
+            2 = Fitting (accurate fabric), 3 = FAST (GPU).
+        simulation_mode: 0 = CPU, 1 = FAST (GPU).
+    """
+    return _send("set_simulation_quality",
+                 {"quality": quality, "simulation_mode": simulation_mode})
+
+
+@mcp.tool()
+def ping() -> dict:
+    """Check that the CLO3D bridge plug-in is running and reachable.
+
+    Use this first when other tools time out - it distinguishes "the plug-in
+    is not running" from "CLO is busy".
+    """
+    return _send("ping")
