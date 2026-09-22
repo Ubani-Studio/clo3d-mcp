@@ -59,3 +59,7 @@ venv/
 .pytest_cache/
 .coverage
 htmlcov/
+# test fixtures - garments are large binaries
+*.zprj
+*.zpac
+*.zfab

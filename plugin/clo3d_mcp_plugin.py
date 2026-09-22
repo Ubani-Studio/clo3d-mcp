@@ -1,5 +1,6 @@
 import json
 import os
+import tempfile
 import sys
 import time
 import threading
@@ -16,7 +17,12 @@ except ImportError:
     print("[CLO MCP] WARNING: Not running inside CLO3D. API calls will fail.")
 
 # Communication directory
-COMM_DIR = os.path.join(os.environ.get("TEMP", os.path.expanduser("~")), "clo3d_mcp")
+# Must match clo3d_mcp/connection.py. TEMP is a Windows variable: on macOS and
+# Linux it is unset, and the two sides previously fell back to different
+# directories (server /tmp, plug-in ~) so they never found each other.
+COMM_DIR = os.environ.get("CLO3D_MCP_DIR") or os.path.join(
+    tempfile.gettempdir(), "clo3d_mcp"
+)
 REQUEST_FILE = os.path.join(COMM_DIR, "request.json")
 RESPONSE_FILE = os.path.join(COMM_DIR, "response.json")
 POLL_INTERVAL = 0.1
@@ -150,7 +156,10 @@ def handle_create_pattern(params):
     for p in points:
         x, y = p[0], p[1]
         vtype = p[2] if len(p) > 2 else 0
-        point_tuples.append((x, y, vtype))
+        # CreatePatternWithPoints takes vector<tuple<float,float,int>>. pybind11
+        # invokes NESTED casters with convert=False, so a Python int in the x/y
+        # slots is rejected outright instead of promoted. Coerce explicitly.
+        point_tuples.append((float(x), float(y), int(vtype)))
     result = pattern_api.CreatePatternWithPoints(point_tuples)
     return {"created": True, "point_count": len(point_tuples), "result": result}
 
@@ -211,6 +220,15 @@ def handle_get_fabric_for_pattern(params):
     return {"pattern_index": pattern_index, "fabric_index": fabric_index}
 
 
+def handle_replace_fabric(params):
+    """fabric_api.ReplaceFabric(fabricIndex, inputFilePath) -> bool."""
+    fabric_index = params["fabric_index"]
+    file_path = params["file_path"]
+    result = fabric_api.ReplaceFabric(fabric_index, file_path)
+    return {"replaced": bool(result), "fabric_index": fabric_index,
+            "file_path": file_path}
+
+
 def handle_delete_fabric(params):
     fabric_index = params["fabric_index"]
     result = fabric_api.DeleteFabric(fabric_index)
@@ -250,11 +268,26 @@ def handle_export_fbx(params):
     return {"exported": bool(result), "file_path": result or file_path, "format": "fbx"}
 
 
+def _build_export_option(options):
+    """Build an ImportExportOption from a caller-supplied dict.
+
+    Unknown keys are ignored rather than silently changing behaviour.
+    """
+    if hasattr(export_api, "ImportExportOption"):
+        opt = export_api.ImportExportOption()
+    else:
+        opt = export_api.NewImportExportOption()
+    for key, val in (options or {}).items():
+        if hasattr(opt, key):
+            setattr(opt, key, val)
+    return opt
+
+
 def handle_export_glb(params):
     file_path = params["file_path"]
     try:
-        options = export_api.ImportExportOption()
-        result = export_api.ExportGLB(file_path, options)
+        # was: a fresh ImportExportOption(), discarding params["options"]
+        result = export_api.ExportGLB(file_path, _build_export_option(params.get("options")))
     except (AttributeError, TypeError):
         result = export_api.ExportGLB(file_path)
     return {"exported": bool(result), "file_path": result or file_path, "format": "glb"}
@@ -263,8 +296,8 @@ def handle_export_glb(params):
 def handle_export_gltf(params):
     file_path = params["file_path"]
     try:
-        options = export_api.ImportExportOption()
-        result = export_api.ExportGLTF(file_path, options, False)
+        result = export_api.ExportGLTF(
+            file_path, _build_export_option(params.get("options")), False)
     except (AttributeError, TypeError):
         result = export_api.ExportGLTF(file_path)
     return {"exported": bool(result), "file_path": result or file_path, "format": "gltf"}
@@ -299,7 +332,9 @@ def handle_export_tech_pack(params):
         result = export_api.ExportTechPack(file_path, options)
     except (AttributeError, TypeError):
         result = export_api.ExportTechPack(file_path)
-    return {"exported": bool(result), "file_path": result or file_path}
+    # ExportTechPack returns void, so "success" is "no exception raised";
+    # bool(result) was always False even when the tech pack was written.
+    return {"exported": True, "file_path": file_path}
 
 
 # -- Import --
@@ -332,9 +367,12 @@ def handle_simulate(params):
 
 
 def handle_set_simulation_quality(params):
+    # SDK: SetSimulationQuality(int quality, int simulationMode) - both required.
+    # quality 0=Normal 1=Animation 2=Fitting 3=FAST(GPU); mode 0=CPU 1=FAST(GPU)
     quality = params["quality"]
-    utility_api.SetSimulationQuality(quality)
-    return {"quality": quality}
+    simulation_mode = params.get("simulation_mode", 0)
+    utility_api.SetSimulationQuality(quality, simulation_mode)
+    return {"quality": quality, "simulation_mode": simulation_mode}
 
 
 # -- Colorway --
@@ -367,9 +405,13 @@ def handle_set_colorway_name(params):
 
 
 def handle_copy_colorway(params):
+    # SDK: CopyColorway(index, copyOption) -> index of the new colorway.
+    # copyOption 0=unlink all 1=unlink materials only 2=link all
     index = params["colorway_index"]
-    utility_api.CopyColorway(index)
-    return {"copied": True, "source_index": index}
+    copy_option = params.get("copy_option", 0)
+    new_index = utility_api.CopyColorway(index, copy_option)
+    return {"copied": True, "source_index": index,
+            "copy_option": copy_option, "new_index": new_index}
 
 
 def handle_delete_colorway(params):
@@ -432,6 +474,7 @@ HANDLERS = {
     "assign_fabric": handle_assign_fabric,
     "set_fabric_color": handle_set_fabric_color,
     "get_fabric_for_pattern": handle_get_fabric_for_pattern,
+    "replace_fabric": handle_replace_fabric,
     "delete_fabric": handle_delete_fabric,
     "export_obj": handle_export_obj,
     "export_fbx": handle_export_fbx,

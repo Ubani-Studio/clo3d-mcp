@@ -6,11 +6,13 @@ The MCP server writes request.json, the plugin reads it, processes,
 and writes response.json. Both sides use atomic writes (temp + rename).
 
 On WSL, auto-detects the Windows temp directory for the shared path.
-Override with CLO3D_MCP_DIR environment variable if needed.
+Override with CLO3D_MCP_DIR environment variable if needed; the plug-in
+honours the same variable, so setting it on the server is enough.
 """
 
 import json
 import os
+import tempfile
 import time
 import uuid
 
@@ -63,8 +65,12 @@ def _find_comm_dir():
         except OSError:
             pass
 
-    # 3. Fallback: local temp
-    return os.path.join(os.environ.get("TEMP", "/tmp"), "clo3d_mcp")
+    # 3. Fallback: the platform temp dir.
+    #    TEMP is a Windows variable. On macOS/Linux it is unset, and the two
+    #    sides used DIFFERENT fallbacks (server /tmp, plugin ~), so they never
+    #    met. tempfile.gettempdir() honours TEMP/TMP/TMPDIR on every platform,
+    #    so both sides now agree.
+    return os.path.join(tempfile.gettempdir(), "clo3d_mcp")
 
 
 class CLO3DConnection:

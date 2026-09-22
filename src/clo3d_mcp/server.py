@@ -10,7 +10,7 @@ from clo3d_mcp.connection import get_connection, CLO3DConnectionError
 
 mcp = FastMCP(
     "clo3d",
-    description="Control CLO3D — the industry-standard 3D garment design software. "
+    instructions="Control CLO3D — the industry-standard 3D garment design software. "
     "Create patterns, manage fabrics, run simulations, export 3D models, and more.",
 )
 
@@ -131,14 +131,20 @@ def delete_pattern(pattern_index: int) -> dict:
 
 
 @mcp.tool()
-def flip_pattern(pattern_index: int, horizontal: bool = True) -> dict:
+def flip_pattern(
+    pattern_index: int, horizontal: bool = True, each: bool = True
+) -> dict:
     """Flip a pattern piece horizontally or vertically.
 
     Args:
         pattern_index: Zero-based index of the pattern piece to flip.
         horizontal: True for horizontal flip, False for vertical flip.
+        each: True flips each piece about its own axis; False flips the
+            selection as a group.
     """
-    return _send("flip_pattern", {"pattern_index": pattern_index, "horizontal": horizontal})
+    return _send("flip_pattern", {
+        "pattern_index": pattern_index, "horizontal": horizontal, "each": each,
+    })
 
 
 @mcp.tool()
@@ -211,7 +217,10 @@ def assign_fabric_to_pattern(
 
 
 @mcp.tool()
-def set_fabric_color(fabric_index: int, r: int = 255, g: int = 255, b: int = 255) -> dict:
+def set_fabric_color(
+    fabric_index: int, r: int = 255, g: int = 255, b: int = 255,
+    a: int = 255, material_face: int = 0,
+) -> dict:
     """Set the PBR base color of a fabric.
 
     Args:
@@ -219,8 +228,13 @@ def set_fabric_color(fabric_index: int, r: int = 255, g: int = 255, b: int = 255
         r: Red channel (0-255).
         g: Green channel (0-255).
         b: Blue channel (0-255).
+        a: Alpha channel (0-255).
+        material_face: Which face to colour - 0 front, 1 back, 2 side.
     """
-    return _send("set_fabric_color", {"fabric_index": fabric_index, "r": r, "g": g, "b": b})
+    return _send("set_fabric_color", {
+        "fabric_index": fabric_index, "r": r, "g": g, "b": b,
+        "a": a, "material_face": material_face,
+    })
 
 
 @mcp.tool()
@@ -289,15 +303,16 @@ def export_gltf(file_path: str, options: dict | None = None) -> dict:
 
 
 @mcp.tool()
-def export_thumbnail(file_path: str, width: int = 512, height: int = 512) -> dict:
-    """Export a 3D viewport screenshot/thumbnail.
+def export_thumbnail(file_path: str) -> dict:
+    """Export a 3D viewport thumbnail.
 
     Args:
         file_path: Absolute path for the exported image file.
-        width: Image width in pixels (default 512).
-        height: Image height in pixels (default 512).
+
+    CLO's ExportThumbnail3D takes no size arguments, so the previous
+    width/height parameters could never have any effect.
     """
-    return _send("export_thumbnail", {"file_path": file_path, "width": width, "height": height})
+    return _send("export_thumbnail", {"file_path": file_path})
 
 
 @mcp.tool()
@@ -311,13 +326,24 @@ def export_snapshot(file_path: str) -> dict:
 
 
 @mcp.tool()
-def export_turntable(file_path: str) -> dict:
+def export_turntable(
+    file_path: str,
+    number_of_images: int = 36,
+    width: int = 2500,
+    height: int = 2500,
+) -> dict:
     """Export a 360-degree turntable image sequence.
 
     Args:
         file_path: Absolute path (directory or base name) for turntable images.
+        number_of_images: How many frames to render around the turn.
+        width: Frame width in pixels.
+        height: Frame height in pixels.
     """
-    return _send("export_turntable", {"file_path": file_path})
+    return _send("export_turntable", {
+        "file_path": file_path, "number_of_images": number_of_images,
+        "width": width, "height": height,
+    })
 
 
 @mcp.tool()
