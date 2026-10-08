@@ -1,8 +1,8 @@
+import builtins
 import json
 import os
 import sys
 import time
-import threading
 
 try:
     import export_api
@@ -20,9 +20,6 @@ COMM_DIR = os.path.join(os.environ.get("TEMP", os.path.expanduser("~")), "clo3d_
 REQUEST_FILE = os.path.join(COMM_DIR, "request.json")
 RESPONSE_FILE = os.path.join(COMM_DIR, "response.json")
 POLL_INTERVAL = 0.1
-
-_server_running = False
-_server_thread = None
 
 
 # ---------------------------------------------------------------------------
@@ -409,8 +406,16 @@ def handle_get_avatar_genders(params):
 # Handler registry
 # ---------------------------------------------------------------------------
 
+def handle_stop(params):
+    state = getattr(builtins, "_clo3d_mcp", None)
+    if state:
+        state["stop"] = True
+    return {"stopped": True}
+
+
 HANDLERS = {
     "ping": handle_ping,
+    "stop": handle_stop,
     "get_project_info": handle_get_project_info,
     "new_project": handle_new_project,
     "open_file": handle_open_file,
@@ -491,90 +496,121 @@ def process_command(data):
         })
 
 
-def poll_loop():
-    """Poll for request files and process them."""
-    global _server_running
+# ---------------------------------------------------------------------------
+# Listener
+#
+# CLO3D's embedded Python does not schedule background threads once the
+# Script Editor run returns, so a threading.Thread poller never runs (seen on
+# macOS and on Windows). On Windows, a native Win32 timer is dispatched by
+# CLO3D's own UI event loop on the main thread: each tick handles at most one
+# request and returns, so CLO3D stays responsive. On other platforms, fall
+# back to a blocking loop (the Script Editor stays busy while listening).
+# State lives in `builtins` so that re-running the script replaces the
+# previous listener and the timer callback is never garbage-collected.
+# ---------------------------------------------------------------------------
 
-    # Create comm directory
+if sys.platform == "win32":
+    import ctypes
+    import ctypes.wintypes as _wt
+
+    _user32 = ctypes.windll.user32
+    _TIMERPROC = ctypes.WINFUNCTYPE(None, _wt.HWND, _wt.UINT, ctypes.c_size_t, _wt.DWORD)
+    _user32.SetTimer.argtypes = [_wt.HWND, ctypes.c_size_t, _wt.UINT, _TIMERPROC]
+    _user32.SetTimer.restype = ctypes.c_size_t
+    _user32.KillTimer.argtypes = [_wt.HWND, ctypes.c_size_t]
+    _user32.KillTimer.restype = _wt.BOOL
+
+
+def _handle_one_request():
+    """Process the pending request, if any. Returns True if one was handled."""
+    if not os.path.exists(REQUEST_FILE):
+        return False
+    with open(REQUEST_FILE, "r") as f:
+        data = f.read()
+    try:
+        os.remove(REQUEST_FILE)
+    except OSError:
+        pass
+    if not data.strip():
+        return False
+    response = process_command(data)
+    # Write to temp file first, then rename (atomic)
+    tmp_file = RESPONSE_FILE + ".tmp"
+    with open(tmp_file, "w") as f:
+        f.write(response)
+    if os.path.exists(RESPONSE_FILE):
+        os.remove(RESPONSE_FILE)
+    os.rename(tmp_file, RESPONSE_FILE)
+    return True
+
+
+def _tick(hwnd, msg, timer_id, time_ms):
+    state = getattr(builtins, "_clo3d_mcp", None)
+    if not state or state["busy"]:  # a long call (e.g. simulate) may pump messages and re-enter
+        return
+    state["busy"] = True
+    try:
+        _handle_one_request()
+    except Exception as e:
+        print("[CLO MCP] Error: " + str(e))
+    finally:
+        state["busy"] = False
+    if state["stop"]:
+        stop()
+
+
+def _prepare_comm_dir():
     if not os.path.exists(COMM_DIR):
         os.makedirs(COMM_DIR)
-
-    # Clean up stale files
-    for f in [REQUEST_FILE, RESPONSE_FILE]:
+    for f in (REQUEST_FILE, RESPONSE_FILE):
         if os.path.exists(f):
             try:
                 os.remove(f)
             except OSError:
                 pass
 
-    print("[CLO MCP] Listening for commands in: " + COMM_DIR)
-
-    while _server_running:
-        try:
-            if os.path.exists(REQUEST_FILE):
-                # Read request
-                with open(REQUEST_FILE, "r") as f:
-                    data = f.read()
-
-                # Delete request file
-                try:
-                    os.remove(REQUEST_FILE)
-                except OSError:
-                    pass
-
-                if data.strip():
-                    # Process and write response
-                    response = process_command(data)
-
-                    # Write to temp file first, then rename (atomic)
-                    tmp_file = RESPONSE_FILE + ".tmp"
-                    with open(tmp_file, "w") as f:
-                        f.write(response)
-
-                    # Rename to final path
-                    if os.path.exists(RESPONSE_FILE):
-                        os.remove(RESPONSE_FILE)
-                    os.rename(tmp_file, RESPONSE_FILE)
-
-        except Exception as e:
-            print("[CLO MCP] Error: " + str(e))
-
-        time.sleep(POLL_INTERVAL)
-
-    print("[CLO MCP] Server stopped")
-
-
-# ---------------------------------------------------------------------------
-# Public API
-# ---------------------------------------------------------------------------
 
 def start():
-    """Start the MCP plugin."""
-    global _server_running, _server_thread
+    """Start listening. Re-running the script replaces the previous listener."""
+    stop(quiet=True)
+    _prepare_comm_dir()
+    builtins._clo3d_mcp = {"timer_id": None, "callback": None, "busy": False, "stop": False}
+    state = builtins._clo3d_mcp
 
-    if _server_running:
-        print("[CLO MCP] Already running")
-        return
+    if sys.platform == "win32":
+        callback = _TIMERPROC(_tick)
+        timer_id = _user32.SetTimer(None, 0, int(POLL_INTERVAL * 1000), callback)
+        if timer_id:
+            state["timer_id"], state["callback"] = timer_id, callback
+            print("[CLO MCP] Plugin started")
+            print("[CLO MCP] Listening for commands in: " + COMM_DIR)
+            print("[CLO MCP] CLO3D stays usable while listening.")
+            return
+        print("[CLO MCP] Could not create a Windows timer, falling back to a blocking loop.")
 
-    _server_running = True
-    _server_thread = threading.Thread(target=poll_loop, daemon=True)
-    _server_thread.start()
-    print("[CLO MCP] Plugin started")
-
-
-def stop():
-    """Stop the MCP plugin."""
-    global _server_running, _server_thread
-
-    if not _server_running:
-        print("[CLO MCP] Not running")
-        return
-
-    _server_running = False
-    if _server_thread:
-        _server_thread.join(timeout=5)
-        _server_thread = None
+    print("[CLO MCP] Plugin started (the Script Editor stays busy while listening)")
+    print("[CLO MCP] Listening for commands in: " + COMM_DIR)
+    while not state["stop"]:
+        try:
+            _handle_one_request()
+        except Exception as e:
+            print("[CLO MCP] Error: " + str(e))
+        time.sleep(POLL_INTERVAL)
     print("[CLO MCP] Plugin stopped")
+
+
+def stop(quiet=False):
+    """Stop listening (also reachable through the "stop" command)."""
+    state = getattr(builtins, "_clo3d_mcp", None)
+    if not state:
+        return
+    state["stop"] = True
+    timer_id = state.get("timer_id") or state.get("id")  # "id": earlier local builds of this listener
+    if timer_id and sys.platform == "win32":
+        _user32.KillTimer(None, timer_id)
+        state["timer_id"] = state["id"] = None
+        if not quiet:
+            print("[CLO MCP] Plugin stopped")
 
 
 # Auto-start
