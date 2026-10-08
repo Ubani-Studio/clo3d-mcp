@@ -39,7 +39,7 @@ def handle_get_project_info(params):
     minor = utility_api.GetMinorVersion()
     patch = utility_api.GetPatchVersion()
     pattern_count = pattern_api.GetPatternCount()
-    fabric_count = fabric_api.GetFabricCount()
+    fabric_count = fabric_api.GetFabricCount(True)
     colorway_count = utility_api.GetColorwayCount()
     return {
         "project_name": name,
@@ -160,7 +160,7 @@ def handle_get_arrangement_list(params):
 # -- Fabric --
 
 def handle_get_fabric_count(params):
-    count = fabric_api.GetFabricCount()
+    count = fabric_api.GetFabricCount(True)
     return {"count": count}
 
 
