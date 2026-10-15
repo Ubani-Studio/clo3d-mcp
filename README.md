@@ -27,7 +27,7 @@ Run it once per CLO3D session. On Windows the plugin listens through a native ti
 
 **Claude Code:**
 ```bash
-claude mcp add clo3d -- uvx clo3d-mcp
+claude mcp add clo3d -- uvx --from git+https://github.com/Ubani-Studio/clo3d-mcp clo3d-mcp
 ```
 
 **Claude Desktop** (add to `claude_desktop_config.json`):
@@ -36,7 +36,7 @@ claude mcp add clo3d -- uvx clo3d-mcp
   "mcpServers": {
     "clo3d": {
       "command": "uvx",
-      "args": ["clo3d-mcp"]
+      "args": ["--from", "git+https://github.com/Ubani-Studio/clo3d-mcp", "clo3d-mcp"]
     }
   }
 }
@@ -166,6 +166,4 @@ uv run clo3d-mcp
 
 MIT for the code authored here. See [LICENSE](LICENSE).
 
-`sdk/` holds CLO Virtual Fashion's interface headers and sample sources and is **not** covered by that licence: no rights in it are granted here. See [NOTICE](NOTICE). You need your own CLO3D licence.
-
-CLO3D SDK headers in `sdk/` are provided by CLO Virtual Fashion for plugin development. You need your own CLO3D license.
+This repository contains no CLO3D SDK material. The plugin uses only the Python API that ships inside CLO3D, so you need your own CLO3D licence and nothing else from CLO.
