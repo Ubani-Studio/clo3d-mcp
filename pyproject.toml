@@ -9,7 +9,7 @@ description = "MCP server for CLO3D: AI-assisted 3D garment design"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
-authors = [{ name = "Violet Sphinx" }]
+authors = [{ name = "Alabo MacPepple-Jaja" }]
 keywords = ["clo3d", "mcp", "fashion", "3d", "garment", "ai"]
 classifiers = [
     "Development Status :: 3 - Alpha",
