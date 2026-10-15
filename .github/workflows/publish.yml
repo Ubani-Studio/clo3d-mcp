@@ -1,0 +1,29 @@
+# Publish to PyPI when a GitHub release is published. Uses PyPI trusted publishing (OIDC): no token is stored
+# anywhere. One-time setup on pypi.org: Publishing, add a pending publisher with owner Ubani-Studio, repository
+# clo3d-mcp, workflow publish.yml, environment pypi.
+name: publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run --with pytest pytest -q
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv build
+      - uses: pypa/gh-action-pypi-publish@release/v1
