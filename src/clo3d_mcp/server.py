@@ -10,7 +10,7 @@ from clo3d_mcp.connection import get_connection, CLO3DConnectionError
 
 mcp = FastMCP(
     "clo3d",
-    description="Control CLO3D — the industry-standard 3D garment design software. "
+    instructions="Control CLO3D — the industry-standard 3D garment design software. "
     "Create patterns, manage fabrics, run simulations, export 3D models, and more.",
 )
 
@@ -131,14 +131,20 @@ def delete_pattern(pattern_index: int) -> dict:
 
 
 @mcp.tool()
-def flip_pattern(pattern_index: int, horizontal: bool = True) -> dict:
+def flip_pattern(
+    pattern_index: int, horizontal: bool = True, each: bool = True
+) -> dict:
     """Flip a pattern piece horizontally or vertically.
 
     Args:
         pattern_index: Zero-based index of the pattern piece to flip.
         horizontal: True for horizontal flip, False for vertical flip.
+        each: True flips each piece about its own axis; False flips the
+            selection as a group.
     """
-    return _send("flip_pattern", {"pattern_index": pattern_index, "horizontal": horizontal})
+    return _send("flip_pattern", {
+        "pattern_index": pattern_index, "horizontal": horizontal, "each": each,
+    })
 
 
 @mcp.tool()
@@ -211,7 +217,10 @@ def assign_fabric_to_pattern(
 
 
 @mcp.tool()
-def set_fabric_color(fabric_index: int, r: int = 255, g: int = 255, b: int = 255) -> dict:
+def set_fabric_color(
+    fabric_index: int, r: int = 255, g: int = 255, b: int = 255,
+    a: int = 255, material_face: int = 0,
+) -> dict:
     """Set the PBR base color of a fabric.
 
     Args:
@@ -219,8 +228,13 @@ def set_fabric_color(fabric_index: int, r: int = 255, g: int = 255, b: int = 255
         r: Red channel (0-255).
         g: Green channel (0-255).
         b: Blue channel (0-255).
+        a: Alpha channel (0-255).
+        material_face: Which face to colour - 0 front, 1 back, 2 side.
     """
-    return _send("set_fabric_color", {"fabric_index": fabric_index, "r": r, "g": g, "b": b})
+    return _send("set_fabric_color", {
+        "fabric_index": fabric_index, "r": r, "g": g, "b": b,
+        "a": a, "material_face": material_face,
+    })
 
 
 @mcp.tool()
@@ -289,15 +303,16 @@ def export_gltf(file_path: str, options: dict | None = None) -> dict:
 
 
 @mcp.tool()
-def export_thumbnail(file_path: str, width: int = 512, height: int = 512) -> dict:
-    """Export a 3D viewport screenshot/thumbnail.
+def export_thumbnail(file_path: str) -> dict:
+    """Export a 3D viewport thumbnail.
 
     Args:
         file_path: Absolute path for the exported image file.
-        width: Image width in pixels (default 512).
-        height: Image height in pixels (default 512).
+
+    CLO's ExportThumbnail3D takes no size arguments, so the previous
+    width/height parameters could never have any effect.
     """
-    return _send("export_thumbnail", {"file_path": file_path, "width": width, "height": height})
+    return _send("export_thumbnail", {"file_path": file_path})
 
 
 @mcp.tool()
@@ -311,13 +326,24 @@ def export_snapshot(file_path: str) -> dict:
 
 
 @mcp.tool()
-def export_turntable(file_path: str) -> dict:
+def export_turntable(
+    file_path: str,
+    number_of_images: int = 36,
+    width: int = 2500,
+    height: int = 2500,
+) -> dict:
     """Export a 360-degree turntable image sequence.
 
     Args:
         file_path: Absolute path (directory or base name) for turntable images.
+        number_of_images: How many frames to render around the turn.
+        width: Frame width in pixels.
+        height: Frame height in pixels.
     """
-    return _send("export_turntable", {"file_path": file_path})
+    return _send("export_turntable", {
+        "file_path": file_path, "number_of_images": number_of_images,
+        "width": width, "height": height,
+    })
 
 
 @mcp.tool()
@@ -373,3 +399,119 @@ def set_current_colorway(colorway_index: int) -> dict:
         colorway_index: Zero-based index of the colorway to activate.
     """
     return _send("set_current_colorway", {"colorway_index": colorway_index})
+
+
+@mcp.tool()
+def set_colorway_name(colorway_index: int, name: str) -> dict:
+    """Rename a colorway.
+
+    Args:
+        colorway_index: Zero-based index of the colorway to rename.
+        name: New name for the colorway.
+    """
+    return _send("set_colorway_name", {"colorway_index": colorway_index, "name": name})
+
+
+@mcp.tool()
+def copy_colorway(colorway_index: int, copy_option: int = 0) -> dict:
+    """Duplicate a colorway, returning the new colorway's index.
+
+    Args:
+        colorway_index: Zero-based index of the colorway to copy.
+        copy_option: 0 = unlink all properties, 1 = unlink material properties
+            only, 2 = link all properties to the source colorway.
+    """
+    return _send("copy_colorway",
+                 {"colorway_index": colorway_index, "copy_option": copy_option})
+
+
+@mcp.tool()
+def delete_colorway(colorway_index: int) -> dict:
+    """Delete a colorway from the project.
+
+    Args:
+        colorway_index: Zero-based index of the colorway to delete.
+    """
+    return _send("delete_colorway", {"colorway_index": colorway_index})
+
+
+@mcp.tool()
+def get_avatars() -> dict:
+    """List the avatars in the current project, with names and genders."""
+    return _send("get_avatars")
+
+
+@mcp.tool()
+def get_avatar_genders() -> dict:
+    """Get the gender of each avatar in the current project."""
+    return _send("get_avatar_genders")
+
+
+@mcp.tool()
+def show_hide_avatar(show: bool = True) -> dict:
+    """Show or hide the avatar in the 3D viewport.
+
+    Args:
+        show: True to show the avatar, False to hide it.
+    """
+    return _send("show_hide_avatar", {"show": show})
+
+
+@mcp.tool()
+def import_avatar(file_path: str, apf_path: str = "") -> dict:
+    """Import an avatar into the current project.
+
+    Args:
+        file_path: Absolute path to the avatar file (.avt).
+        apf_path: Optional absolute path to an avatar pose file (.apf).
+    """
+    return _send("import_avatar", {"file_path": file_path, "apf_path": apf_path})
+
+
+@mcp.tool()
+def get_fabric_count() -> dict:
+    """Get the number of fabrics in the current project."""
+    return _send("get_fabric_count")
+
+
+@mcp.tool()
+def import_fabric(file_path: str) -> dict:
+    """Import a fabric from file, returning its new fabric index.
+
+    Args:
+        file_path: Absolute path to the fabric file (.zfab).
+    """
+    return _send("import_fabric", {"file_path": file_path})
+
+
+@mcp.tool()
+def delete_fabric(fabric_index: int) -> dict:
+    """Delete a fabric from the project.
+
+    Args:
+        fabric_index: Zero-based index of the fabric to delete.
+    """
+    return _send("delete_fabric", {"fabric_index": fabric_index})
+
+
+@mcp.tool()
+def set_simulation_quality(quality: int, simulation_mode: int = 0) -> dict:
+    """Set the simulation quality preset.
+
+    Args:
+        quality: 0 = Normal (default), 1 = Animation (stable),
+            2 = Fitting (accurate fabric), 3 = FAST (GPU).
+        simulation_mode: 0 = CPU, 1 = FAST (GPU).
+    """
+    return _send("set_simulation_quality",
+                 {"quality": quality, "simulation_mode": simulation_mode})
+
+
+@mcp.tool()
+def ping() -> dict:
+    """Check that the CLO3D bridge plug-in is running and reachable.
+
+    Use this first when other tools time out - it distinguishes "the plug-in
+    is not running" from "CLO is busy".
+    """
+    return _send("ping")
