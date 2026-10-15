@@ -12,7 +12,7 @@ import pytest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Code, docs and config only. Everything else (a .zprj, an .avt, a DXF, a PNG, an OBJ) is refused.
-ALLOWED = {".py", ".md", ".toml", ".lock", ".json", ".yml", ".yaml", ".txt", ".cfg", ".ini", ".sh", ""}
+ALLOWED = {".py", ".md", ".toml", ".lock", ".json", ".yml", ".yaml", ".txt", ".cfg", ".ini", ".sh", ".ps1", ""}
 ALLOWED_NAMES = {"LICENSE", ".gitignore", ".gitattributes", ".python-version"}
 MAX_BYTES = 200_000
 # Words that tie a file to the studio machine or its people, held as SHA-256 so this public file does
