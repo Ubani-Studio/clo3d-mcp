@@ -328,14 +328,26 @@ def handle_export_turntable(params):
 
 def handle_export_tech_pack(params):
     file_path = params["file_path"]
-    try:
-        options = export_api.ExportTechpackOption()
-        result = export_api.ExportTechPack(file_path, options)
-    except (AttributeError, TypeError):
-        result = export_api.ExportTechPack(file_path)
-    # ExportTechPack returns void, so "success" is "no exception raised";
-    # bool(result) was always False even when the tech pack was written.
-    return {"exported": True, "file_path": file_path}
+    # CLO3D 2024.1 declares ExportTechPack(path, ExportTechpackOption) but exposes no ExportTechpackOption to
+    # Python, so that call cannot be made (seen live 2026-10-15). ExportTechPackToStream returns the same tech
+    # pack as JSON, and we write it. The file's existence is checked, never assumed.
+    route = "ExportTechPack"
+    option_cls = getattr(export_api, "ExportTechpackOption", None)
+    if option_cls is not None:
+        export_api.ExportTechPack(file_path, option_cls())
+    else:
+        route = "ExportTechPackToStream"
+        data = export_api.ExportTechPackToStream(file_path)
+        if not data:
+            raise RuntimeError("CLO3D returned an empty tech pack")
+        folder = os.path.dirname(file_path)
+        if folder and not os.path.isdir(folder):
+            os.makedirs(folder)
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(data)
+    if not os.path.isfile(file_path):
+        raise RuntimeError("CLO3D reported success but wrote no file at " + file_path)
+    return {"exported": True, "file_path": file_path, "bytes": os.path.getsize(file_path), "route": route}
 
 
 # -- Import --
