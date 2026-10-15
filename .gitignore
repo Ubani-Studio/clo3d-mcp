@@ -64,3 +64,30 @@ htmlcov/
 *.zpac
 *.zfab
 tests/_scratch_out/
+
+# Studio material never enters this repo (tests/test_no_assets.py refuses it even if forced):
+# garments, avatars and twins, patterns, scans, renders, textures.
+*.zprj
+*.zpac
+*.zfab
+*.zpose
+*.avt
+*.avs
+*.apf
+*.dxf
+*.rul
+*.aama
+*.obj
+*.fbx
+*.glb
+*.gltf
+*.abc
+*.usd*
+*.ply
+*.png
+*.jpg
+*.jpeg
+*.tif*
+*.exr
+*.mp4
+*.duf

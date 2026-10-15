@@ -552,8 +552,41 @@ def process_command(data):
 # previous listener and the timer callback is never garbage-collected.
 # ---------------------------------------------------------------------------
 
+def _import_ctypes():
+    """ctypes, finding CLO3D's own copy if it is not on the path.
+
+    CLO3D ships _ctypes.pyd in a PythonLib folder beside python37.dll but does not put that folder on
+    sys.path, so a bare `import ctypes` fails with "No module named '_ctypes'" (seen in CLO3D
+    Standalone OnlineAuth, Python 3.7). Look beside the executable and beside the bundled
+    python3x.zip, add the folder that holds _ctypes, and import again. Returns None if none does.
+    """
+    try:
+        import ctypes  # noqa: F401
+        return ctypes
+    except ImportError:
+        pass
+    roots = [os.path.dirname(sys.executable)]
+    roots += [os.path.dirname(p) for p in sys.path if p.lower().endswith(".zip")]
+    for root in roots:
+        for sub in ("PythonLib", "DLLs", ""):
+            folder = os.path.join(root, sub) if sub else root
+            if os.path.isfile(os.path.join(folder, "_ctypes.pyd")) and folder not in sys.path:
+                sys.path.append(folder)
+                try:
+                    import ctypes  # noqa: F811
+                    print("[CLO MCP] Found ctypes in " + folder)
+                    return ctypes
+                except ImportError:
+                    sys.path.remove(folder)
+    return None
+
+
+_HAVE_TIMER = False
 if sys.platform == "win32":
-    import ctypes
+    ctypes = _import_ctypes()
+    _HAVE_TIMER = ctypes is not None
+
+if _HAVE_TIMER:
     import ctypes.wintypes as _wt
 
     _user32 = ctypes.windll.user32
@@ -620,6 +653,13 @@ def start():
     builtins._clo3d_mcp = {"timer_id": None, "callback": None, "busy": False, "stop": False}
     state = builtins._clo3d_mcp
 
+    if sys.platform == "win32" and not _HAVE_TIMER:
+        # A blocking loop would freeze CLO3D's whole window, so refuse rather than fall back to it.
+        print("[CLO MCP] Not started: ctypes is not available in CLO3D's Python, so the plug-in cannot")
+        print("[CLO MCP] listen without freezing CLO3D. Looked beside " + sys.executable + " and its python3x.zip.")
+        print("[CLO MCP] Please report this at github.com/Ubani-Studio/clo3d-mcp/issues with your CLO3D version.")
+        return
+
     if sys.platform == "win32":
         callback = _TIMERPROC(_tick)
         timer_id = _user32.SetTimer(None, 0, int(POLL_INTERVAL * 1000), callback)
@@ -649,7 +689,7 @@ def stop(quiet=False):
         return
     state["stop"] = True
     timer_id = state.get("timer_id") or state.get("id")  # "id": earlier local builds of this listener
-    if timer_id and sys.platform == "win32":
+    if timer_id and _HAVE_TIMER:
         _user32.KillTimer(None, timer_id)
         state["timer_id"] = state["id"] = None
         if not quiet:
