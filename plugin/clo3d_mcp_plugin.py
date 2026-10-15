@@ -361,8 +361,15 @@ def handle_import_file(params):
 def handle_import_avatar(params):
     file_path = params["file_path"]
     apf_path = params.get("apf_path", "")
-    result = import_api.ImportAVAC(file_path, apf_path)
-    return {"imported": result, "file_path": file_path}
+    # ImportAVAC takes CLO3D's .avac only; an .avt (CLO3D's own avatar files) returns False from it
+    # and loads through ImportFile (seen live in CLO3D 2024.1, 2026-10-16).
+    if file_path.lower().endswith(".avac"):
+        result = import_api.ImportAVAC(file_path, apf_path)
+        route = "ImportAVAC"
+    else:
+        result = import_api.ImportFile(file_path)
+        route = "ImportFile"
+    return {"imported": bool(result), "file_path": file_path, "route": route}
 
 
 def handle_import_fabric(params):
