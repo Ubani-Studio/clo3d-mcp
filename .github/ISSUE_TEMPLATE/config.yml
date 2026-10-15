@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and ideas
+    url: https://github.com/Ubani-Studio/clo3d-mcp/discussions
+    about: Ask in Discussions. Issues are for test reports and bugs.

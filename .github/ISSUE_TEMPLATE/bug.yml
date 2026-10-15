@@ -1,0 +1,22 @@
+name: Bug
+description: Something broke. Include your CLO3D version and OS.
+labels: ["bug"]
+body:
+  - type: input
+    id: clo_version
+    attributes:
+      label: CLO3D version and OS
+      placeholder: "2026.1.224, macOS (Apple Silicon)"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error text or console output
+      render: text

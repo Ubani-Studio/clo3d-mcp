@@ -50,7 +50,7 @@ Ask things like:
 - *"Run 100 steps of simulation then export as GLB"*
 - *"Export a turntable of all colorways"*
 
-## What you get (33 tools)
+## What you get (45 tools)
 
 ### Scene
 | Tool | What it does |
@@ -145,6 +145,14 @@ Two pieces:
 - CLO3D with Python scripting support
 - Python 3.10+
 - uv or pip
+
+## Testing
+
+clo3d-mcp is tested by the people who use it, on the CLO3D versions they run. If you try it, working or not, file a
+[Tested on](https://github.com/Ubani-Studio/clo3d-mcp/issues/new?template=tested-on.yml) report: your CLO3D version, OS, client
+and what happened. It takes two minutes, failures count as much as successes, and every tester is credited in the next release.
+
+Questions, ideas and polls on what to build next live in [Discussions](https://github.com/Ubani-Studio/clo3d-mcp/discussions).
 
 ## Development
 

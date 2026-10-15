@@ -1,0 +1,44 @@
+name: Tested on
+description: Report a CLO3D version and OS you ran clo3d-mcp on, working or not. Every report is credited in the next release.
+title: "Tested on CLO3D <version>, <OS>"
+labels: ["tested-on", "tester"]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for testing. One report per CLO3D version and OS. Failures are as useful as successes.
+  - type: input
+    id: clo_version
+    attributes:
+      label: CLO3D version
+      placeholder: "2025.2.236"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: ["Windows 11", "Windows 10", "macOS (Apple Silicon)", "macOS (Intel)", "Other"]
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      placeholder: "Claude Desktop, Claude Code, Cursor, other"
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options: ["Everything I tried worked", "Some tools failed", "The plugin never answered", "The server did not start"]
+    validations:
+      required: true
+  - type: textarea
+    id: tools
+    attributes:
+      label: What you tried
+      description: The tools or prompts you ran, and what happened. Paste any error text.
+  - type: input
+    id: version
+    attributes:
+      label: clo3d-mcp version or commit
+      placeholder: "v0.1.1"
