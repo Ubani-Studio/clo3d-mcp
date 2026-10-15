@@ -63,3 +63,4 @@ htmlcov/
 *.zprj
 *.zpac
 *.zfab
+tests/_scratch_out/
