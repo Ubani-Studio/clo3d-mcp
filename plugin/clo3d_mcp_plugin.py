@@ -33,7 +33,11 @@ POLL_INTERVAL = 0.1
 # ---------------------------------------------------------------------------
 
 def handle_ping(params):
-    return {"pong": True, "in_clo3d": IN_CLO3D}
+    reply = {"pong": True, "in_clo3d": IN_CLO3D}
+    if globals().get("DEV"):
+        reply["dev"] = True
+        reply["plugin_mtime"] = os.path.getmtime(PLUGIN_PATH) if PLUGIN_PATH and os.path.isfile(PLUGIN_PATH) else None
+    return reply
 
 
 # -- Scene --
@@ -509,6 +513,55 @@ HANDLERS = {
 # File-based communication
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Dev mode: run test code inside CLO3D and reload this file, without the Script Editor.
+# Off unless the launcher sets CLO3D_MCP_DEV before running this file, because run_script executes
+# whatever code arrives in the request directory. Started by clo3d_mcp_dev.py (see README, Development).
+# ---------------------------------------------------------------------------
+
+DEV = bool(globals().get("CLO3D_MCP_DEV") or os.environ.get("CLO3D_MCP_DEV"))
+PLUGIN_PATH = globals().get("CLO3D_MCP_PLUGIN_PATH") or globals().get("__file__")
+
+
+def handle_run_script(params):
+    """Run Python inside CLO3D (code, or a file path) and return what it printed, or the error."""
+    import io
+    import traceback
+    from contextlib import redirect_stdout, redirect_stderr
+
+    code = params.get("code")
+    if code is None:
+        with open(params["path"], encoding="utf-8") as f:
+            code = f.read()
+    ns = {"__name__": "__clo3d_mcp_script__"}
+    for api in ("export_api", "fabric_api", "import_api", "pattern_api", "utility_api"):
+        if api in globals():
+            ns[api] = globals()[api]
+    out = io.StringIO()
+    try:
+        with redirect_stdout(out), redirect_stderr(out):
+            exec(compile(code, params.get("path") or "<run_script>", "exec"), ns)
+        return {"ok": True, "output": out.getvalue(), "result": repr(ns.get("result")) if "result" in ns else None}
+    except Exception:
+        return {"ok": False, "output": out.getvalue(), "error": traceback.format_exc()}
+
+
+def handle_reload_plugin(params):
+    """Re-run this plug-in file from disk; the new listener replaces this one."""
+    path = params.get("path") or PLUGIN_PATH
+    if not path or not os.path.isfile(path):
+        raise ValueError("no plug-in file to reload: " + str(path))
+    with open(path, encoding="utf-8") as f:
+        src = f.read()
+    compile(src, path, "exec")  # a syntax error is refused here and the running listener stays up
+    retired = getattr(builtins, "_clo3d_mcp_retired", [])
+    retired.append(getattr(builtins, "_clo3d_mcp", None))  # keep the running callback alive until it returns
+    builtins._clo3d_mcp_retired = retired[-8:]
+    ns = {"__name__": "__main__", "CLO3D_MCP_DEV": True, "CLO3D_MCP_PLUGIN_PATH": path}
+    exec(compile(src, path, "exec"), ns)
+    return {"reloaded": path}
+
+
 def process_command(data):
     """Parse and execute a single JSON command."""
     try:
@@ -521,6 +574,8 @@ def process_command(data):
     params = request.get("params", {})
 
     handler = HANDLERS.get(cmd_type)
+    if not handler and DEV:
+        handler = {"run_script": handle_run_script, "reload_plugin": handle_reload_plugin}.get(cmd_type)
     if not handler:
         return json.dumps({
             "id": req_id,
@@ -631,7 +686,7 @@ def _tick(hwnd, msg, timer_id, time_ms):
         print("[CLO MCP] Error: " + str(e))
     finally:
         state["busy"] = False
-    if state["stop"]:
+    if state["stop"] and getattr(builtins, "_clo3d_mcp", None) is state:
         stop()
 
 

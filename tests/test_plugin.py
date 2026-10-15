@@ -52,7 +52,7 @@ class FakeAPI(types.ModuleType):
         return call
 
 
-def load_plugin():
+def load_plugin(dev=False):
     """The plug-in module with fake CLO3D APIs and WITHOUT its auto-start (which would begin listening)."""
     fakes = {name: FakeAPI(name) for name in CLO_MODULES}
     sys.modules.update(fakes)
@@ -61,6 +61,8 @@ def load_plugin():
     assert "\n    start()" not in src.split("# Auto-start")[-1], "the auto-start line moved; update load_plugin"
     module = types.ModuleType("clo3d_mcp_plugin")
     module.__file__ = PLUGIN
+    if dev:
+        module.CLO3D_MCP_DEV = True
     exec(compile(src, PLUGIN, "exec"), module.__dict__)
     return module, fakes
 
