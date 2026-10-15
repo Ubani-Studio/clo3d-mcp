@@ -508,6 +508,13 @@ def set_simulation_quality(quality: int, simulation_mode: int = 0) -> dict:
 
 
 @mcp.tool()
+def list_extensions() -> dict:
+    """List the extension files loaded from CLO3D_MCP_EXTENSIONS, the tools each added, and any that
+    failed to load with the reason. Empty when no extensions are configured."""
+    return EXTENSIONS
+
+
+@mcp.tool()
 def ping() -> dict:
     """Check that the CLO3D bridge plug-in is running and reachable.
 
@@ -515,3 +522,11 @@ def ping() -> dict:
     is not running" from "CLO is busy".
     """
     return _send("ping")
+
+
+# ─── Extensions ────────────────────────────────────────────────────────────
+# Loaded last, so an extension sees every built-in tool name and cannot replace one.
+
+from clo3d_mcp.extensions import load_extensions  # noqa: E402
+
+EXTENSIONS = load_extensions(mcp, _send)

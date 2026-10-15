@@ -50,7 +50,7 @@ Ask things like:
 - *"Run 100 steps of simulation then export as GLB"*
 - *"Export a turntable of all colorways"*
 
-## What you get (45 tools)
+## What you get (46 tools)
 
 ### Scene
 | Tool | What it does |
@@ -127,6 +127,30 @@ Two pieces:
 │   (clo3d-mcp)   │  %TEMP%/clo3d_mcp │  (Python script)  │                  │        │
 └─────────────────┘                   └──────────────────┘                  └────────┘
 ```
+
+## Your own tools
+
+Keep house tools (your blocks, your naming scheme, your grading rules) in your own folder, private if you like, and the server loads them beside the built-ins. No fork.
+
+```python
+# my_tools/house.py
+def register(ext):
+    @ext.tool()
+    def prefix_pieces(prefix: str) -> dict:
+        """Prefix every pattern piece name."""
+        pieces = ext.send("get_pattern_list")["patterns"]
+        for p in pieces:
+            ext.send("set_pattern_name", {"pattern_index": p["index"], "name": f"{prefix}-{p['name']}"})
+        return {"renamed": len(pieces)}
+```
+
+Point the server at the folder:
+
+```bash
+claude mcp add clo3d -e CLO3D_MCP_EXTENSIONS=/path/to/my_tools -- uvx --from git+https://github.com/Ubani-Studio/clo3d-mcp clo3d-mcp
+```
+
+Several folders or files are separated by `:` (`;` on Windows). Files starting with `_` are skipped, so helpers can sit beside the tools. `ext.send` uses the commands the plug-in already handles. A file that fails to load is named in the server's log and by the `list_extensions` tool, never skipped in silence, and an extension cannot replace a built-in tool.
 
 ## Troubleshooting
 
