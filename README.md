@@ -19,7 +19,9 @@ One Python file, no dependencies.
 3. Open `plugin/clo3d_mcp_plugin.py`
 4. Hit **Run**
 
-You'll see `[CLO MCP] Plugin started` in the console.
+You'll see `[CLO MCP] Plugin started` and `[CLO MCP] Listening for commands in: ...` in the console.
+
+Run it once per CLO3D session. On Windows the plugin listens through a native timer driven by CLO3D's own event loop, so CLO3D stays fully usable. On other platforms it falls back to a blocking loop: the Script Editor stays busy while the plugin listens. Re-running the script replaces the previous listener.
 
 ### 2. Connect your AI client
 
@@ -131,6 +133,8 @@ Two pieces:
 **"Cannot find CLO3D communication directory"**: Is CLO3D running? Did you run the plugin script?
 
 **Plugin errors**: Check the Script Editor console in CLO3D for Python tracebacks.
+
+**Every call times out although the plugin says it started**: CLO3D's embedded Python does not run background threads once a script returns. Make sure you run the current plugin, which does not rely on a background thread.
 
 **Simulation/export timeout**: These can take a while. The default timeout is 180 seconds.
 
