@@ -1,7 +1,12 @@
 """Unit tests for CLO3D file-based connection client."""
 
 import os
+import threading
+import time
+
 import pytest
+
+from clo3d_mcp import connection
 from clo3d_mcp.connection import CLO3DConnection, CLO3DConnectionError
 
 
@@ -10,8 +15,6 @@ class TestCLO3DConnection:
         """Create a fresh connection pointing at the mock server's temp dir."""
         conn = CLO3DConnection.__new__(CLO3DConnection)
         conn.comm_dir = mock_server.comm_dir
-        conn.request_file = mock_server.request_file
-        conn.response_file = mock_server.response_file
         conn._initialized = True
         return conn
 
@@ -58,8 +61,6 @@ class TestCLO3DConnection:
     def test_no_comm_dir_ping_fails(self, tmp_path):
         conn = CLO3DConnection.__new__(CLO3DConnection)
         conn.comm_dir = str(tmp_path / "nonexistent")
-        conn.request_file = str(tmp_path / "nonexistent" / "request.json")
-        conn.response_file = str(tmp_path / "nonexistent" / "response.json")
         conn._initialized = True
         assert conn.ping() is False
 
@@ -71,3 +72,42 @@ class TestCLO3DConnection:
         assert r1["pong"] is True
         assert r2["count"] == 5
         assert r3["clo_version"] == "7.0.0"
+
+    def test_concurrent_senders_get_their_own_responses(self, mock_server):
+        # Several MCP servers share one directory; none may steal another's reply.
+        conn = self._make_conn(mock_server)
+        commands = ["ping", "get_pattern_count", "get_project_info", "get_colorways"] * 5
+        results, errors = {}, []
+
+        def send(i, cmd):
+            try:
+                results[i] = (cmd, conn.send_command(cmd))
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=send, args=(i, c)) for i, c in enumerate(commands)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=10)
+
+        assert not errors
+        assert len(results) == len(commands)
+        for cmd, result in results.values():
+            if cmd == "get_pattern_count":
+                assert result == {"count": 5}
+            elif cmd == "ping":
+                assert result["pong"] is True
+
+    def test_unanswered_request_fails_fast_and_is_withdrawn(self, tmp_path, monkeypatch):
+        # Directory exists but no plugin is polling it.
+        monkeypatch.setattr(connection, "PICKUP_TIMEOUT", 0.3)
+        conn = CLO3DConnection.__new__(CLO3DConnection)
+        conn.comm_dir = str(tmp_path)
+        conn._initialized = True
+
+        start = time.time()
+        with pytest.raises(CLO3DConnectionError, match="not responding"):
+            conn.send_command("get_project_info")
+        assert time.time() - start < 2
+        assert os.listdir(tmp_path) == []

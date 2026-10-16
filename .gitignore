@@ -91,3 +91,9 @@ tests/_scratch_out/
 *.exr
 *.mp4
 *.duf
+
+# Local data (CLO API dump, snapshots, textures, personal avatars)
+.api_docs.json
+.snapshots/
+.textures/
+.avatars/

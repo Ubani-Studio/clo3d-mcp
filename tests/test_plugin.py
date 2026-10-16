@@ -21,6 +21,13 @@ SERVER = os.path.join(ROOT, "src", "clo3d_mcp", "server.py")
 CLO_MODULES = ("export_api", "fabric_api", "import_api", "pattern_api", "utility_api")
 
 
+# Calls whose real answer has a shape the name rules below cannot guess.
+SHAPES = {
+    "GetArrangementList": [{"ArrangementIndex": 0, "ArrangementName": "a"}, {"ArrangementIndex": 1, "ArrangementName": "b"}],
+    "GetSeamlinePairGroupListInPattern": [],
+}
+
+
 class FakeAPI(types.ModuleType):
     """Any CLO3D call answers with a value of the shape its name implies, and is recorded."""
 
@@ -34,6 +41,8 @@ class FakeAPI(types.ModuleType):
 
         def call(*args, **kwargs):
             self.calls.append((attr, args, kwargs))
+            if attr in SHAPES:
+                return SHAPES[attr]
             low = attr.lower()
             if "count" in low:
                 return 2
@@ -135,7 +144,8 @@ PLUGIN_MODULE, FAKES = load_plugin()
 
 
 def test_every_server_command_exists_in_the_plugin():
-    unknown = sorted(set(server_calls()) - set(PLUGIN_MODULE.HANDLERS))
+    pump_only = {"reload_plugin"}  # registered only when the native pump loaded the plug-in
+    unknown = sorted(set(server_calls()) - set(PLUGIN_MODULE.HANDLERS) - pump_only)
     assert not unknown, f"the server sends commands the plug-in does not handle: {unknown}"
 
 

@@ -11,14 +11,12 @@ import pytest
 class MockCLO3DServer:
     """Minimal mock of the CLO3D plugin file-based server.
 
-    Polls for request.json in a temp directory, processes commands
-    using built-in handlers, and writes response.json.
+    Polls for req_<id>.json files in a temp directory, processes commands
+    using built-in handlers, and writes resp_<id>.json.
     """
 
     def __init__(self):
         self.comm_dir = tempfile.mkdtemp(prefix="clo3d_mcp_test_")
-        self.request_file = os.path.join(self.comm_dir, "request.json")
-        self.response_file = os.path.join(self.comm_dir, "response.json")
         self._thread = None
         self._running = False
         self._handlers = {
@@ -68,12 +66,11 @@ class MockCLO3DServer:
         if self._thread:
             self._thread.join(timeout=3)
         # Clean up temp dir
-        for f in [self.request_file, self.response_file]:
-            if os.path.exists(f):
-                try:
-                    os.remove(f)
-                except OSError:
-                    pass
+        for name in os.listdir(self.comm_dir):
+            try:
+                os.remove(os.path.join(self.comm_dir, name))
+            except OSError:
+                pass
         try:
             os.rmdir(self.comm_dir)
         except OSError:
@@ -81,44 +78,33 @@ class MockCLO3DServer:
 
     def _loop(self):
         while self._running:
-            try:
-                if os.path.exists(self.request_file):
-                    with open(self.request_file, "r") as f:
-                        data = f.read()
-
-                    try:
-                        os.remove(self.request_file)
-                    except OSError:
-                        pass
-
-                    if data.strip():
-                        request = json.loads(data)
-                        req_id = request.get("id")
-                        cmd_type = request.get("type")
-                        params = request.get("params", {})
-
-                        handler = self._handlers.get(cmd_type)
-                        if handler:
-                            result = handler(params)
-                            resp = {"id": req_id, "status": "success", "result": result}
-                        else:
-                            resp = {
-                                "id": req_id,
-                                "status": "error",
-                                "message": f"Unknown command: {cmd_type}",
-                            }
-
-                        tmp = self.response_file + ".tmp"
-                        with open(tmp, "w") as f:
-                            f.write(json.dumps(resp))
-                        if os.path.exists(self.response_file):
-                            os.remove(self.response_file)
-                        os.rename(tmp, self.response_file)
-
-            except Exception as e:
-                print(f"[MockServer] Error: {e}")
-
+            for name in sorted(os.listdir(self.comm_dir)):
+                if not (name.startswith("req_") and name.endswith(".json")):
+                    continue
+                try:
+                    self._handle(os.path.join(self.comm_dir, name))
+                except Exception as e:
+                    print(f"[MockServer] Error: {e}")
             time.sleep(0.02)
+
+    def _handle(self, request_file):
+        with open(request_file, "r") as f:
+            request = json.loads(f.read())
+        os.remove(request_file)
+
+        req_id = request.get("id")
+        cmd_type = request.get("type")
+        handler = self._handlers.get(cmd_type)
+        if handler:
+            resp = {"id": req_id, "status": "success", "result": handler(request.get("params", {}))}
+        else:
+            resp = {"id": req_id, "status": "error", "message": f"Unknown command: {cmd_type}"}
+
+        response_file = os.path.join(self.comm_dir, f"resp_{req_id}.json")
+        tmp = response_file + ".tmp"
+        with open(tmp, "w") as f:
+            f.write(json.dumps(resp))
+        os.rename(tmp, response_file)
 
 
 @pytest.fixture

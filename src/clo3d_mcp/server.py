@@ -160,6 +160,172 @@ def create_pattern(points: list[list[float]]) -> dict:
 
 
 @mcp.tool()
+def list_library(kind: str, contains: str | None = None) -> dict:
+    """List avatars or fabrics in CLO's asset library, with their file paths.
+
+    Args:
+        kind: "Avatar" or "Fabric".
+        contains: Case-insensitive filter on file names, e.g. "Denim", "Male".
+    """
+    return _send("list_library", {"kind": kind, "contains": contains})
+
+
+@mcp.tool()
+def load_avatar(avatar: str) -> dict:
+    """Load an avatar into the scene. Required before arrange_pattern.
+
+    Args:
+        avatar: Library name or part of it ("Luka", "Jinho", "Mia",
+                "MV2.1_Mannequin"), or an absolute .avt path.
+                See list_library(kind="Avatar").
+    """
+    return _send("load_avatar", {"avatar": avatar})
+
+
+@mcp.tool()
+def list_arrangement_points(contains: str | None = None) -> dict:
+    """List the avatar's arrangement points (where pieces get placed on the body).
+
+    Names follow Body_Front_Center_3, Body_Back_Center_3, Body_Side_L,
+    Arm_Outside_1_R, Leg_Skirt_Front, Neck_Back, etc. Needs an avatar loaded.
+
+    Args:
+        contains: Case-insensitive filter, e.g. "Body_Front", "Skirt", "Arm".
+    """
+    return _send("list_arrangement_points", {"contains": contains})
+
+
+@mcp.tool()
+def arrange_pattern(pattern_index: int, point: str, orientation: int | None = None) -> dict:
+    """Place a pattern piece on the avatar at an arrangement point, ready to simulate.
+
+    Front pieces go on Body_Front_* points, backs on Body_Back_*, sleeves on
+    Arm_*, skirt/trouser pieces on Leg_* points.
+
+    Args:
+        pattern_index: Index of the pattern to place.
+        point: Arrangement point name (e.g. "Body_Front_Center_3") or index.
+        orientation: Optional rotation in degrees around the point.
+    """
+    return _send("arrange_pattern", {"pattern_index": pattern_index, "point": point, "orientation": orientation})
+
+
+@mcp.tool()
+def reset_garment() -> dict:
+    """Move all pieces back to their arranged positions, undoing simulation.
+
+    Use before re-simulating after changing patterns or seams.
+    """
+    return _send("reset_garment")
+
+
+@mcp.tool()
+def get_pattern_lines(pattern_index: int) -> dict:
+    """Get a pattern's outline lines: index, start/end points, length and location.
+
+    Line i runs from outline point i to point i+1, in the order the points were
+    given to create_pattern. Use these indices with sew_patterns. Re-read after
+    unfold_pattern, which renumbers lines.
+
+    Args:
+        pattern_index: Zero-based index of the pattern piece.
+    """
+    return _send("get_pattern_lines", {"pattern_index": pattern_index})
+
+
+@mcp.tool()
+def sew_patterns(
+    pattern_a: int,
+    line_a: int,
+    pattern_b: int,
+    line_b: int,
+    direction_a: bool = True,
+    direction_b: bool = True,
+    internal_shape_b: int | None = None,
+) -> dict:
+    """Sew an outline line of one pattern to an outline line of another,
+    or to a line of an internal shape on pattern B (pass internal_shape_b).
+
+    Directions follow each line's start->end (see get_pattern_lines): True sews
+    start to end, False end to start. Choose them so the ends that should meet
+    line up, e.g. two side seams drawn in opposite directions use True/False.
+
+    Args:
+        pattern_a: Index of the first pattern.
+        line_a: Line index on the first pattern.
+        pattern_b: Index of the second pattern.
+        line_b: Line index on the second pattern.
+        direction_a: Sewing direction along line_a.
+        direction_b: Sewing direction along line_b.
+        internal_shape_b: Internal shape index on pattern B, as returned by
+                add_internal_line; line_b then indexes that shape's lines.
+                Use for patch pockets: draw the pocket outline on the panel
+                with add_internal_line, then sew the pocket edges to it.
+    """
+    return _send("sew_patterns", {
+        "pattern_a": pattern_a, "line_a": line_a,
+        "pattern_b": pattern_b, "line_b": line_b,
+        "direction_a": direction_a, "direction_b": direction_b,
+        "internal_shape_b": internal_shape_b,
+    })
+
+
+@mcp.tool()
+def unfold_pattern(pattern_index: int, line_index: int, half_symmetry: bool = False) -> dict:
+    """Mirror a half pattern across one of its lines to make the full piece.
+
+    Renumbers the outline lines; the result includes the new numbering.
+    Unfold before sewing, or re-read lines afterwards.
+
+    Args:
+        pattern_index: Index of the pattern to unfold.
+        line_index: Line to mirror across (usually the centre front/back).
+        half_symmetry: Keep the halves linked so edits mirror.
+    """
+    return _send("unfold_pattern", {
+        "pattern_index": pattern_index, "line_index": line_index, "half_symmetry": half_symmetry,
+    })
+
+
+@mcp.tool()
+def move_pattern(pattern_index: int, dx: float, dy: float) -> dict:
+    """Move a pattern piece in the 2D window by an offset in mm. Returns its new position.
+
+    Args:
+        pattern_index: Index of the pattern to move.
+        dx: Horizontal offset in mm.
+        dy: Vertical offset in mm.
+    """
+    return _send("move_pattern", {"pattern_index": pattern_index, "dx": dx, "dy": dy})
+
+
+@mcp.tool()
+def set_grain_direction(pattern_index: int, degrees: float) -> dict:
+    """Set a pattern's fabric grain direction in degrees (0 = default, 45 = bias).
+
+    Args:
+        pattern_index: Index of the pattern.
+        degrees: Grain angle in degrees.
+    """
+    return _send("set_grain_direction", {"pattern_index": pattern_index, "degrees": degrees})
+
+
+@mcp.tool()
+def add_internal_line(pattern_index: int, points: list[list[float]], closed: bool = False) -> dict:
+    """Draw an internal line or shape inside a pattern (darts, fold lines, placement marks).
+
+    Args:
+        pattern_index: Index of the pattern to draw in.
+        points: [x, y] or [x, y, type] in the pattern's mm coordinates.
+                Type: 0=straight (default), 2=spline, 3=bezier.
+        closed: Connect the last point back to the first.
+
+    Returns internal_shape_index, for sew_patterns(internal_shape_b=...).
+    """
+    return _send("add_internal_line", {"pattern_index": pattern_index, "points": points, "closed": closed})
+
+
+@mcp.tool()
 def get_arrangement_list() -> dict:
     """Get the list of arrangement points on the avatar."""
     return _send("get_arrangement_list")
@@ -316,13 +482,26 @@ def export_thumbnail(file_path: str) -> dict:
 
 
 @mcp.tool()
-def export_snapshot(file_path: str) -> dict:
-    """Export multi-view snapshot images of the 3D garment.
+def export_snapshot(file_path: str | None = None, views: list[str] | None = None) -> dict:
+    """Export snapshot images of the 3D view. Returns the image file paths.
+
+    Use after simulate to check the drape; the images can be viewed directly.
+    Pass views to rotate the camera and capture several angles in one call;
+    the camera returns to the front afterwards.
 
     Args:
-        file_path: Absolute path (directory or base name) for snapshot images.
+        file_path: Absolute .png path (with views, used as the name prefix).
+                   Default: timestamped files in ~/clo3d-mcp/.snapshots/.
+        views: Camera angles: "front", "back", "left", "right",
+               "three_quarter_left", "three_quarter_right", "top", "bottom".
+               Omit to capture the current camera.
     """
-    return _send("export_snapshot", {"file_path": file_path})
+    params = {}
+    if file_path:
+        params["file_path"] = file_path
+    if views:
+        params["views"] = views
+    return _send("export_snapshot", params)
 
 
 @mcp.tool()
@@ -386,7 +565,10 @@ def import_dxf(file_path: str, options: dict | None = None) -> dict:
 
 @mcp.tool()
 def simulate(steps: int = 100) -> dict:
-    """Run cloth simulation for a number of steps.
+    """Run cloth simulation for a number of steps (about 2 s per 50 steps).
+
+    Pieces must be sewn and arranged on an avatar first. Check the result
+    with export_snapshot.
 
     Args:
         steps: Number of simulation steps to run (default 100).
@@ -534,6 +716,68 @@ def ping() -> dict:
     is not running" from "CLO is busy".
     """
     return _send("ping")
+
+
+# ─── Generic API Tools ────────────────────────────────────────────────────
+
+
+@mcp.tool()
+def list_clo_api(module: str | None = None, contains: str | None = None, with_docs: bool = False) -> dict:
+    """List the functions CLO3D's Python API exposes in this session.
+
+    Use this to find a function before calling it with call_clo_api.
+
+    Args:
+        module: Limit to one module: export_api, fabric_api, import_api,
+                pattern_api, utility_api or rest_api. Default: all available.
+        contains: Case-insensitive substring filter on function names, e.g. "Seamline".
+        with_docs: Include each function's docstring, which gives its exact
+                Python signature. Use with a filter; the full API is large.
+    """
+    params = {"with_docs": with_docs}
+    if module:
+        params["module"] = module
+    if contains:
+        params["contains"] = contains
+    return _send("list_api", params)
+
+
+@mcp.tool()
+def call_clo_api(
+    module: str,
+    function: str,
+    args: list | None = None,
+    inner_lists_as_tuples: bool = False,
+) -> dict:
+    """Call any function in CLO3D's Python API and return its result.
+
+    Covers the whole API, not just the dedicated tools. Arguments are positional
+    and must match CLO's signature (see list_clo_api and CLO's API reference).
+    This can modify or overwrite files the same way the API can.
+
+    Args:
+        module: API module, e.g. "pattern_api".
+        function: Function name, e.g. "AddSeamlinePairGroup".
+        args: Positional arguments, e.g. [0, 1, 1, 3, True, False].
+        inner_lists_as_tuples: Convert lists nested inside list arguments to
+                tuples, for functions like CreatePatternWithPoints that take
+                a list of (x, y, type) tuples.
+    """
+    return _send("call_api", {
+        "module": module,
+        "function": function,
+        "args": args or [],
+        "inner_lists_as_tuples": inner_lists_as_tuples,
+    })
+
+
+@mcp.tool()
+def reload_plugin() -> dict:
+    """Reload plugin/clo3d_mcp_plugin.py inside CLO3D to pick up edits without restarting CLO3D.
+
+    Works when the plugin was loaded by the native pump (native/clo3d_mcp_pump.cpp).
+    """
+    return _send("reload_plugin")
 
 
 # ─── Extensions ────────────────────────────────────────────────────────────

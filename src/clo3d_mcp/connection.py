@@ -2,8 +2,10 @@
 CLO3D file-based connection client.
 
 Communicates with the CLO3D plugin via a shared directory.
-The MCP server writes request.json, the plugin reads it, processes,
-and writes response.json. Both sides use atomic writes (temp + rename).
+The MCP server writes req_<id>.json, the plugin reads it, processes,
+and writes resp_<id>.json. Both sides use atomic writes (temp + rename).
+Per-request files let several MCP servers (one per Claude session) share
+the directory without reading or overwriting each other's messages.
 
 On WSL, auto-detects the Windows temp directory for the shared path.
 Override with CLO3D_MCP_DIR environment variable if needed; the plug-in
@@ -17,13 +19,19 @@ import time
 import uuid
 
 TIMEOUT = 180  # seconds: simulation/export can take minutes
+PICKUP_TIMEOUT = 5  # seconds for the plugin to pick a request up before we give up
 POLL_INTERVAL = 0.05  # seconds between file checks
-MAX_RETRIES = 3
-RETRY_DELAY = 1.0
 
 
 class CLO3DConnectionError(Exception):
     pass
+
+
+def _remove(path):
+    try:
+        os.remove(path)
+    except OSError:
+        pass
 
 
 def _find_comm_dir():
@@ -88,8 +96,6 @@ class CLO3DConnection:
         if self._initialized:
             return
         self.comm_dir = comm_dir or _find_comm_dir()
-        self.request_file = os.path.join(self.comm_dir, "request.json")
-        self.response_file = os.path.join(self.comm_dir, "response.json")
         self._initialized = True
 
     @property
@@ -109,104 +115,83 @@ class CLO3DConnection:
         """No-op for file-based connection (kept for API compatibility)."""
         pass
 
-    def send_command(self, command_type, params=None, retries=MAX_RETRIES):
+    def send_command(self, command_type, params=None, retries=None):
         """
         Send a command to CLO3D and return the result.
 
-        Writes request.json, waits for response.json, returns the parsed result.
+        Writes req_<id>.json, waits for resp_<id>.json, returns the parsed
+        result. Commands are never re-sent: a retry could repeat a command
+        that changes the scene, such as create_pattern.
+
+        `retries` is accepted for backward compatibility and ignored.
         """
         request = {
             "id": str(uuid.uuid4()),
             "type": command_type,
             "params": params or {},
         }
-
-        for attempt in range(retries):
-            try:
-                return self._do_send(request)
-            except CLO3DConnectionError:
-                if attempt < retries - 1:
-                    time.sleep(RETRY_DELAY)
-                    continue
-                raise
+        return self._do_send(request)
 
     def _do_send(self, request):
-        """Write request, poll for response, return result."""
-        # Ensure comm dir exists
+        """Write request, wait for the plugin to pick it up and answer it."""
         if not os.path.isdir(self.comm_dir):
             raise CLO3DConnectionError(
                 "CLO3D communication directory not found: " + self.comm_dir + ". "
                 "Is CLO3D running with the MCP plugin loaded?"
             )
 
-        # Clean up any stale response file
-        if os.path.exists(self.response_file):
-            try:
-                os.remove(self.response_file)
-            except OSError:
-                pass
+        req_id = request["id"]
+        request_file = os.path.join(self.comm_dir, "req_" + req_id + ".json")
+        response_file = os.path.join(self.comm_dir, "resp_" + req_id + ".json")
 
-        # Write request atomically
-        payload = json.dumps(request)
-        tmp_file = self.request_file + ".tmp"
+        # Write request atomically. The .tmp suffix keeps the plugin from
+        # matching the file until it is complete.
+        tmp_file = request_file + ".tmp"
         with open(tmp_file, "w") as f:
-            f.write(payload)
+            f.write(json.dumps(request))
+        os.rename(tmp_file, request_file)
 
-        # Atomic rename
-        if os.path.exists(self.request_file):
-            os.remove(self.request_file)
-        os.rename(tmp_file, self.request_file)
-
-        # Poll for response
         start_time = time.time()
         while True:
             elapsed = time.time() - start_time
-            if elapsed > TIMEOUT:
+
+            if os.path.exists(response_file):
+                try:
+                    with open(response_file, "r") as f:
+                        response = json.loads(f.read())
+                except (OSError, json.JSONDecodeError, ValueError):
+                    time.sleep(POLL_INTERVAL)
+                    continue
+                _remove(response_file)
+
+                if response.get("status") == "error":
+                    error_msg = response.get("message", "Unknown error from CLO3D")
+                    raise CLO3DConnectionError("CLO3D error: " + error_msg)
+                return response.get("result", {})
+
+            if os.path.exists(request_file):
+                if elapsed > PICKUP_TIMEOUT:
+                    # Withdraw the request so the plugin can't run it later.
+                    _remove(request_file)
+                    raise CLO3DConnectionError(
+                        "CLO3D plugin is not responding (request not picked up within "
+                        + str(PICKUP_TIMEOUT) + "s). Check that CLO3D is open with the "
+                        "native plugin installed, and open Script > Script Editor once "
+                        "after launching CLO3D: CLO3D only starts Python when the "
+                        "editor is first opened."
+                    )
+            elif elapsed > TIMEOUT:
                 raise CLO3DConnectionError(
                     "Timed out waiting for CLO3D response (" + str(TIMEOUT) + "s). "
                     "The operation may still be running in CLO3D."
                 )
-
-            if os.path.exists(self.response_file):
-                try:
-                    with open(self.response_file, "r") as f:
-                        data = f.read()
-
-                    # Delete response file
-                    try:
-                        os.remove(self.response_file)
-                    except OSError:
-                        pass
-
-                    if not data.strip():
-                        time.sleep(POLL_INTERVAL)
-                        continue
-
-                    response = json.loads(data)
-
-                    # Verify this response matches our request
-                    if response.get("id") != request["id"]:
-                        # Stale response from a previous request, keep waiting
-                        time.sleep(POLL_INTERVAL)
-                        continue
-
-                    if response.get("status") == "error":
-                        error_msg = response.get("message", "Unknown error from CLO3D")
-                        raise CLO3DConnectionError("CLO3D error: " + error_msg)
-
-                    return response.get("result", {})
-
-                except (json.JSONDecodeError, ValueError):
-                    # File might be partially written, wait and retry
-                    time.sleep(POLL_INTERVAL)
-                    continue
 
             time.sleep(POLL_INTERVAL)
 
     def ping(self):
         """Test the connection. Returns True if CLO3D responds."""
         try:
-            result = self.send_command("ping", retries=1)
+            result = self.send_command("ping")
             return result.get("pong", False)
         except CLO3DConnectionError:
             return False

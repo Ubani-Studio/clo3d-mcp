@@ -14,6 +14,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Code, docs and config only. Everything else (a .zprj, an .avt, a DXF, a PNG, an OBJ) is refused.
 ALLOWED = {".py", ".md", ".toml", ".lock", ".json", ".yml", ".yaml", ".txt", ".cfg", ".ini", ".sh", ".ps1", ""}
 ALLOWED_NAMES = {"LICENSE", ".gitignore", ".gitattributes", ".python-version"}
+# Our own native source (the macOS pump), not CLO SDK samples.
+ALLOWED_NATIVE = {".cpp"}
 MAX_BYTES = 200_000
 # Words that tie a file to the studio machine or its people, held as SHA-256 so this public file does
 # not itself publish them. A word is any run of letters, digits, _ . or -; Users/<name> paths are
@@ -48,7 +50,8 @@ def faults(paths, read=lambda p: open(os.path.join(ROOT, p), "rb").read()):
     for p in paths:
         name = os.path.basename(p)
         ext = os.path.splitext(name)[1].lower()
-        if name not in ALLOWED_NAMES and ext not in ALLOWED:
+        native = p.startswith("native/") and ext in ALLOWED_NATIVE
+        if name not in ALLOWED_NAMES and ext not in ALLOWED and not native:
             out.append(f"{p}: {ext or 'no extension'} files are never committed here")
             continue
         if STATE.search(p):

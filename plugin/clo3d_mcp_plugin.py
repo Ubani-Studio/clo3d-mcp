@@ -20,11 +20,17 @@ except ImportError:
 # Must match clo3d_mcp/connection.py. TEMP is a Windows variable: on macOS and
 # Linux it is unset, and the two sides previously fell back to different
 # directories (server /tmp, plug-in ~) so they never found each other.
-COMM_DIR = os.environ.get("CLO3D_MCP_DIR") or os.path.join(
-    tempfile.gettempdir(), "clo3d_mcp"
-)
-REQUEST_FILE = os.path.join(COMM_DIR, "request.json")
-RESPONSE_FILE = os.path.join(COMM_DIR, "response.json")
+# The native pump (native/clo3d_mcp_pump.cpp) runs inside CLO3D, which does not
+# see the MCP server's environment, so it uses ~/clo3d_mcp: set CLO3D_MCP_DIR to
+# that on the server side.
+if os.environ.get("CLO3D_MCP_DIR"):
+    COMM_DIR = os.environ["CLO3D_MCP_DIR"]
+elif getattr(builtins, "_CLO3D_MCP_NATIVE_PUMP", False):
+    COMM_DIR = os.path.join(os.path.expanduser("~"), "clo3d_mcp")
+else:
+    COMM_DIR = os.path.join(tempfile.gettempdir(), "clo3d_mcp")
+ASSET_DIR = os.path.join(os.path.expanduser("~"), "Documents", "clo", "CLO Assets")
+SNAPSHOT_DIR = os.path.join(os.path.expanduser("~"), "clo3d-mcp", ".snapshots")
 POLL_INTERVAL = 0.1
 
 
@@ -310,10 +316,41 @@ def handle_export_thumbnail(params):
     return {"exported": bool(result), "file_path": result or file_path}
 
 
-def handle_export_snapshot(params):
-    file_path = params["file_path"]
+# Camera viewpoints for utility_api.SetCamViewPoint (from CLO's SDK docs)
+VIEWPOINTS = {
+    "bottom": 0, "three_quarter_right": 1, "front": 2, "three_quarter_left": 3,
+    "right": 4, "top": 5, "left": 6, "back": 8,
+}
+
+
+def _snapshot(file_path):
+    folder = os.path.dirname(file_path)
+    if folder and not os.path.isdir(folder):
+        os.makedirs(folder)
     result = export_api.ExportSnapshot3D(file_path)
-    return {"exported": bool(result), "file_path": result or file_path}
+    return [f for group in (result or []) for f in (group if isinstance(group, (list, tuple)) else [group])]
+
+
+def handle_export_snapshot(params):
+    """Snapshot the 3D view, optionally from one or more camera viewpoints."""
+    views = params.get("views") or []
+    file_path = params.get("file_path")
+    stamp = time.strftime("%Y%m%d_%H%M%S")
+    if not views:
+        path = file_path or os.path.join(SNAPSHOT_DIR, "snapshot_" + stamp + ".png")
+        files = _snapshot(path)
+        return {"exported": bool(files), "files": files}
+
+    unknown = [v for v in views if v not in VIEWPOINTS]
+    if unknown:
+        raise ValueError("Unknown view(s) " + ", ".join(unknown) + "; use " + ", ".join(sorted(VIEWPOINTS)))
+    base = os.path.splitext(file_path)[0] if file_path else os.path.join(SNAPSHOT_DIR, "snapshot_" + stamp)
+    files = {}
+    for view in views:
+        utility_api.SetCamViewPoint(VIEWPOINTS[view])
+        files[view] = _snapshot(base + "_" + view + ".png")
+    utility_api.SetCamViewPoint(VIEWPOINTS["front"])
+    return {"exported": all(files.values()), "files": files}
 
 
 def handle_export_turntable(params):
@@ -402,8 +439,8 @@ def handle_import_fabric(params):
 
 def handle_simulate(params):
     steps = params.get("steps", 100)
-    utility_api.Simulate(steps)
-    return {"simulated": True, "steps": steps}
+    ok = utility_api.Simulate(steps)
+    return {"simulated": bool(ok), "steps": steps}
 
 
 def handle_set_simulation_quality(params):
@@ -414,8 +451,6 @@ def handle_set_simulation_quality(params):
     utility_api.SetSimulationQuality(quality, simulation_mode)
     return {"quality": quality, "simulation_mode": simulation_mode}
 
-
-# -- Colorway --
 
 def handle_get_colorways(params):
     count = utility_api.GetColorwayCount()
@@ -488,6 +523,228 @@ def handle_get_avatar_genders(params):
 
 
 # ---------------------------------------------------------------------------
+# Avatar, arrangement and asset library
+# ---------------------------------------------------------------------------
+
+def _library_roots(kind):
+    """CLO asset folders for a kind ("Avatar", "Fabric"): user library first, then the app bundle."""
+    return [
+        os.path.join(ASSET_DIR, kind),
+        os.path.join("/Applications/CLO.app/Contents/Assets/CLO Assets", kind),
+    ]
+
+
+def _library_files(kind, extension):
+    """Map file name -> path for every library file of a kind, user library taking precedence."""
+    found = {}
+    for root in _library_roots(kind):
+        for folder, _dirs, files in os.walk(root):
+            for name in files:
+                if name.lower().endswith(extension) and name not in found:
+                    found[name] = os.path.join(folder, name)
+    return found
+
+
+def handle_list_library(params):
+    kind = params["kind"]
+    extensions = {"Avatar": ".avt", "Fabric": ".zfab"}
+    if kind not in extensions:
+        raise ValueError("kind must be one of " + ", ".join(extensions))
+    extension = extensions[kind]
+    contains = (params.get("contains") or "").lower()
+    files = _library_files(kind, extension)
+    matching = [{"name": name, "path": path} for name, path in files.items() if contains in name.lower()]
+    return {"files": sorted(matching, key=lambda f: f["name"])}
+
+
+def handle_load_avatar(params):
+    """Load an avatar by library name (e.g. "Luka") or by .avt path."""
+    avatar = params["avatar"]
+    path = avatar
+    if not os.path.isfile(path):
+        matches = [p for name, p in _library_files("Avatar", ".avt").items() if avatar.lower() in name.lower()]
+        if not matches:
+            raise ValueError("No avatar matching " + repr(avatar) + " in the CLO asset library")
+        if len(matches) > 1:
+            raise ValueError("Several avatars match " + repr(avatar) + ": " + ", ".join(sorted(os.path.basename(m) for m in matches)))
+        path = matches[0]
+    if not import_api.ImportFile(path):
+        raise RuntimeError("CLO3D could not load avatar " + path)
+    return {"loaded": path, "arrangement_points": len(pattern_api.GetArrangementList())}
+
+
+def _arrangement_points():
+    return [
+        {"index": int(p["ArrangementIndex"]), "name": p["ArrangementName"]}
+        for p in pattern_api.GetArrangementList()
+    ]
+
+
+def handle_list_arrangement_points(params):
+    contains = (params.get("contains") or "").lower()
+    points = [p for p in _arrangement_points() if contains in p["name"].lower()]
+    if not points and not contains:
+        raise RuntimeError("No arrangement points. Load an avatar first.")
+    return {"points": points}
+
+
+def handle_arrange_pattern(params):
+    """Place a pattern on an avatar arrangement point, given by name or index."""
+    idx = params["pattern_index"]
+    point = params["point"]
+    points = _arrangement_points()
+    if isinstance(point, str) and not point.isdigit():
+        match = [p for p in points if p["name"].lower() == point.lower()]
+        if not match:
+            raise ValueError("Unknown arrangement point " + repr(point) + ". Use list_arrangement_points.")
+        point = match[0]["index"]
+    pattern_api.SetArrangement(idx, int(point))
+    if params.get("orientation") is not None:
+        pattern_api.SetArrangementOrientation(idx, int(params["orientation"]))
+    return {"arrangement": pattern_api.GetArrangementOfPattern(idx)}
+
+
+def handle_reset_garment(params):
+    """Put pieces back in their arranged positions, undoing simulation."""
+    utility_api.ResetClothArrangement()
+    return {"reset": True}
+
+
+# ---------------------------------------------------------------------------
+# Drafting
+# ---------------------------------------------------------------------------
+
+def _line_info(pattern_index):
+    """Outline lines of a pattern as parsed JSON (line i runs from point i to i+1)."""
+    return json.loads(pattern_api.GetPatternLineInfo(pattern_index))
+
+
+def handle_get_pattern_lines(params):
+    return _line_info(params["pattern_index"])
+
+
+def handle_sew_patterns(params):
+    a, b = params["pattern_a"], params["pattern_b"]
+    dir_a, dir_b = params.get("direction_a", True), params.get("direction_b", True)
+    child_b = params.get("internal_shape_b")
+    before = set(pattern_api.GetSeamlinePairGroupListInPattern(a))
+    if child_b is None:
+        pattern_api.AddSeamlinePairGroup(a, params["line_a"], b, params["line_b"], dir_a, dir_b)
+    else:
+        # Sew to a line of an internal shape on pattern B (e.g. a pocket placement line)
+        pattern_api.AddSeamlinePairGroup(a, params["line_a"], b, child_b, params["line_b"], dir_a, dir_b)
+    # CLO returns True even for invalid indices, so check a seam actually appeared
+    sewn = bool(set(pattern_api.GetSeamlinePairGroupListInPattern(a)) - before)
+    if not sewn:
+        raise RuntimeError("CLO3D did not create the seam; check the pattern, line and internal shape indices")
+    return {"sewn": True, "seam_count": pattern_api.GetSeamlinePairGroupCount()}
+
+
+def handle_unfold_pattern(params):
+    idx = params["pattern_index"]
+    unfolded = pattern_api.UnfoldPatternPiece(idx, params["line_index"], params.get("half_symmetry", False))
+    # Unfolding renumbers the outline lines, so return the new numbering.
+    return {"unfolded": bool(unfolded), "lines": _line_info(idx)}
+
+
+def handle_move_pattern(params):
+    idx = params["pattern_index"]
+    pattern_api.SetPatternPieceMove(idx, params["dx"], params["dy"])
+    return {"position": list(pattern_api.GetPatternPiecePos(idx))}
+
+
+def handle_set_grain_direction(params):
+    idx = params["pattern_index"]
+    pattern_api.SetPatternPieceGrainDirection(idx, params["degrees"])
+    return {"degrees": pattern_api.GetPatternPieceGrainDirection(idx)}
+
+
+def handle_add_internal_line(params):
+    points = [(float(p[0]), float(p[1]), int(p[2]) if len(p) > 2 else 0) for p in params["points"]]
+    child = pattern_api.CreateInternalShapeWithPoints(params["pattern_index"], points, params.get("closed", False))
+    return {"internal_shape_index": child}
+
+
+# ---------------------------------------------------------------------------
+# Generic API access
+# ---------------------------------------------------------------------------
+
+API_MODULE_NAMES = ["export_api", "fabric_api", "import_api", "pattern_api", "utility_api", "rest_api"]
+
+
+def _api_modules():
+    """Return the CLO3D API modules importable in this session, by name."""
+    modules = {}
+    for name in API_MODULE_NAMES:
+        try:
+            modules[name] = __import__(name)
+        except ImportError:
+            pass
+    return modules
+
+
+def _jsonable(value):
+    """Convert an API return value into something json.dumps accepts."""
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, (list, tuple, set)):
+        return [_jsonable(v) for v in value]
+    if isinstance(value, dict):
+        return {str(k): _jsonable(v) for k, v in value.items()}
+    return repr(value)
+
+
+def handle_list_api(params):
+    modules = _api_modules()
+    wanted = params.get("module")
+    contains = (params.get("contains") or "").lower()
+    result = {}
+    for name, module in modules.items():
+        if wanted and name != wanted:
+            continue
+        functions = sorted(
+            attr for attr in dir(module)
+            if not attr.startswith("_") and callable(getattr(module, attr))
+            and contains in attr.lower()
+        )
+        if params.get("with_docs"):
+            # pybind11 docstrings carry the exact Python signature
+            functions = {f: (getattr(module, f).__doc__ or "").strip() for f in functions}
+        result[name] = functions
+    return {"modules": result}
+
+
+def handle_call_api(params):
+    modules = _api_modules()
+    module_name = params["module"]
+    if module_name not in modules:
+        raise ValueError("Unknown module " + module_name + "; available: " + ", ".join(sorted(modules)))
+    func = getattr(modules[module_name], params["function"], None)
+    if func is None or not callable(func):
+        raise ValueError(module_name + " has no function " + params["function"])
+
+    args = params.get("args") or []
+    if params.get("inner_lists_as_tuples"):
+        # e.g. CreatePatternWithPoints wants a list of (x, y, type) tuples
+        args = [
+            [tuple(item) if isinstance(item, list) else item for item in arg] if isinstance(arg, list) else arg
+            for arg in args
+        ]
+    return {"result": _jsonable(func(*args))}
+
+
+def handle_reload_plugin(params):
+    """Reload this module from disk in place; the native pump keeps calling poll_once on it.
+    Registered only under the pump (dev mode has its own reload, which re-runs the file)."""
+    module = sys.modules.get(__name__)
+    if __name__ == "__main__" or module is None:
+        raise RuntimeError("Reload only works when the native pump loaded the plugin")
+    import importlib
+    importlib.reload(module)
+    return {"reloaded": True, "handlers": len(module.HANDLERS)}
+
+
+# ---------------------------------------------------------------------------
 # Handler registry
 # ---------------------------------------------------------------------------
 
@@ -546,7 +803,23 @@ HANDLERS = {
     "get_avatars": handle_get_avatars,
     "show_hide_avatar": handle_show_hide_avatar,
     "get_avatar_genders": handle_get_avatar_genders,
+    "list_library": handle_list_library,
+    "load_avatar": handle_load_avatar,
+    "list_arrangement_points": handle_list_arrangement_points,
+    "arrange_pattern": handle_arrange_pattern,
+    "reset_garment": handle_reset_garment,
+    "get_pattern_lines": handle_get_pattern_lines,
+    "sew_patterns": handle_sew_patterns,
+    "unfold_pattern": handle_unfold_pattern,
+    "move_pattern": handle_move_pattern,
+    "set_grain_direction": handle_set_grain_direction,
+    "add_internal_line": handle_add_internal_line,
+    "list_api": handle_list_api,
+    "call_api": handle_call_api,
 }
+
+if getattr(builtins, "_CLO3D_MCP_NATIVE_PUMP", False):
+    HANDLERS["reload_plugin"] = handle_reload_plugin
 
 
 # ---------------------------------------------------------------------------
@@ -586,7 +859,7 @@ def handle_run_script(params):
         return {"ok": False, "output": out.getvalue(), "error": traceback.format_exc()}
 
 
-def handle_reload_plugin(params):
+def handle_dev_reload_plugin(params):
     """Re-run this plug-in file from disk; the new listener replaces this one."""
     path = params.get("path") or PLUGIN_PATH
     if not path or not os.path.isfile(path):
@@ -615,7 +888,7 @@ def process_command(data):
 
     handler = HANDLERS.get(cmd_type)
     if not handler and DEV:
-        handler = {"run_script": handle_run_script, "reload_plugin": handle_reload_plugin}.get(cmd_type)
+        handler = {"run_script": handle_run_script, "reload_plugin": handle_dev_reload_plugin}.get(cmd_type)
     if not handler:
         return json.dumps({
             "id": req_id,
@@ -692,27 +965,63 @@ if _HAVE_TIMER:
     _user32.KillTimer.restype = _wt.BOOL
 
 
-def _handle_one_request():
-    """Process the pending request, if any. Returns True if one was handled."""
-    if not os.path.exists(REQUEST_FILE):
-        return False
-    with open(REQUEST_FILE, "r") as f:
-        data = f.read()
+def prepare_comm_dir():
+    """Create the comm directory and remove stale files from a previous run."""
+    if not os.path.exists(COMM_DIR):
+        os.makedirs(COMM_DIR)
+
+    for name in os.listdir(COMM_DIR):
+        if name.startswith(("req_", "resp_")) or name in ("request.json", "response.json", "stop"):
+            try:
+                os.remove(os.path.join(COMM_DIR, name))
+            except OSError:
+                pass
+
+    print("[CLO MCP] Listening for commands in: " + COMM_DIR)
+
+
+def _pending_requests():
+    """Complete request files (req_<id>.json), oldest first."""
+    paths = [
+        os.path.join(COMM_DIR, name) for name in os.listdir(COMM_DIR)
+        if name.startswith("req_") and name.endswith(".json")
+    ]
+    return sorted(paths, key=lambda path: os.path.getmtime(path) if os.path.exists(path) else 0)
+
+
+def poll_once():
+    """Handle every pending request file.
+
+    Each request req_<id>.json gets its own response resp_<id>.json, so
+    several MCP servers can share the directory without clobbering each other.
+    """
     try:
-        os.remove(REQUEST_FILE)
-    except OSError:
-        pass
-    if not data.strip():
-        return False
-    response = process_command(data)
-    # Write to temp file first, then rename (atomic)
-    tmp_file = RESPONSE_FILE + ".tmp"
-    with open(tmp_file, "w") as f:
-        f.write(response)
-    if os.path.exists(RESPONSE_FILE):
-        os.remove(RESPONSE_FILE)
-    os.rename(tmp_file, RESPONSE_FILE)
-    return True
+        requests = _pending_requests()
+    except OSError as e:
+        print("[CLO MCP] Error: " + str(e))
+        return
+
+    for request_file in requests:
+        try:
+            with open(request_file, "r") as f:
+                data = f.read()
+            try:
+                os.remove(request_file)
+            except OSError:
+                pass
+
+            req_id = os.path.basename(request_file)[len("req_"):-len(".json")]
+            response = process_command(data)
+
+            # Write to temp file first, then rename (atomic)
+            response_file = os.path.join(COMM_DIR, "resp_" + req_id + ".json")
+            tmp_file = response_file + ".tmp"
+            with open(tmp_file, "w") as f:
+                f.write(response)
+            os.rename(tmp_file, response_file)
+
+        except Exception as e:
+            print("[CLO MCP] Error: " + str(e))
 
 
 def _tick(hwnd, msg, timer_id, time_ms):
@@ -721,7 +1030,7 @@ def _tick(hwnd, msg, timer_id, time_ms):
         return
     state["busy"] = True
     try:
-        _handle_one_request()
+        poll_once()
     except Exception as e:
         print("[CLO MCP] Error: " + str(e))
     finally:
@@ -730,21 +1039,14 @@ def _tick(hwnd, msg, timer_id, time_ms):
         stop()
 
 
-def _prepare_comm_dir():
-    if not os.path.exists(COMM_DIR):
-        os.makedirs(COMM_DIR)
-    for f in (REQUEST_FILE, RESPONSE_FILE):
-        if os.path.exists(f):
-            try:
-                os.remove(f)
-            except OSError:
-                pass
-
-
 def start():
     """Start listening. Re-running the script replaces the previous listener."""
+    if getattr(builtins, "_CLO3D_MCP_NATIVE_PUMP", False):
+        # The native pump (native/clo3d_mcp_pump.cpp) imported this module and calls
+        # poll_once() from CLO3D's main thread itself.
+        return
     stop(quiet=True)
-    _prepare_comm_dir()
+    prepare_comm_dir()
     builtins._clo3d_mcp = {"timer_id": None, "callback": None, "busy": False, "stop": False}
     state = builtins._clo3d_mcp
 
@@ -761,16 +1063,14 @@ def start():
         if timer_id:
             state["timer_id"], state["callback"] = timer_id, callback
             print("[CLO MCP] Plugin started")
-            print("[CLO MCP] Listening for commands in: " + COMM_DIR)
             print("[CLO MCP] CLO3D stays usable while listening.")
             return
         print("[CLO MCP] Could not create a Windows timer, falling back to a blocking loop.")
 
     print("[CLO MCP] Plugin started (the Script Editor stays busy while listening)")
-    print("[CLO MCP] Listening for commands in: " + COMM_DIR)
     while not state["stop"]:
         try:
-            _handle_one_request()
+            poll_once()
         except Exception as e:
             print("[CLO MCP] Error: " + str(e))
         time.sleep(POLL_INTERVAL)
@@ -794,3 +1094,4 @@ def stop(quiet=False):
 # Auto-start
 if __name__ == "__main__" or IN_CLO3D:
     start()
+

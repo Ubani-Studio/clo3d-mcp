@@ -25,3 +25,7 @@ clo3d-mcp = "clo3d_mcp:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/clo3d_mcp"]
+
+# Rebuild when the server source changes, not only pyproject.toml, so uvx picks up edits.
+[tool.uv]
+cache-keys = [{ file = "pyproject.toml" }, { file = "src/**/*.py" }]
