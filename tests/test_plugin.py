@@ -52,10 +52,22 @@ class FakeAPI(types.ModuleType):
         return call
 
 
+class FakeDxfOption:
+    """CLO3D 2024.1's ImportDxfOption fields and defaults, read live on 2026-10-16."""
+    def __init__(self):
+        self.m_Angle, self.m_Scale, self.m_bAppend, self.m_bAutoScale = 0.0, 1.0, False, True
+        self.m_bIncludeNotchs, self.m_bImportPatternAnnotation, self.m_bConvertToSeamAllowance = False, True, False
+
+
+class FakeTypes(types.ModuleType):
+    ImportDxfOption = FakeDxfOption
+
+
 def load_plugin(dev=False):
     """The plug-in module with fake CLO3D APIs and WITHOUT its auto-start (which would begin listening)."""
     fakes = {name: FakeAPI(name) for name in CLO_MODULES}
     sys.modules.update(fakes)
+    sys.modules["ApiTypes"] = FakeTypes("ApiTypes")
     src = open(PLUGIN, encoding="utf-8").read()
     src = re.sub(r"\nif __name__ == \"__main__\" or IN_CLO3D:\n\s+start\(\)\s*$", "\n", src)
     assert "\n    start()" not in src.split("# Auto-start")[-1], "the auto-start line moved; update load_plugin"
@@ -163,3 +175,14 @@ def test_fabric_count_passes_the_required_bool():
     PLUGIN_MODULE.process_command(json.dumps({"id": 1, "type": "get_fabric_count"}))
     calls = [c for c in FAKES["fabric_api"].calls if c[0] == "GetFabricCount"]
     assert calls and calls[0][1] == (True,), f"GetFabricCount must be called with True (both overloads take one argument): {calls}"
+
+
+def test_import_dxf_appends_keeps_notches_and_refuses_unknown_options():
+    FAKES["import_api"].calls.clear()
+    r = json.loads(PLUGIN_MODULE.process_command(json.dumps({"id": 1, "type": "import_dxf", "params": {"file_path": "C:/b.dxf"}})))
+    assert r["status"] == "success", r
+    name, args, _ = FAKES["import_api"].calls[-1]
+    assert name == "ImportDXF" and args[1].m_bAppend is True and args[1].m_bIncludeNotchs is True
+    bad = json.loads(PLUGIN_MODULE.process_command(json.dumps(
+        {"id": 2, "type": "import_dxf", "params": {"file_path": "C:/b.dxf", "options": {"m_bNoSuchThing": 1}}})))
+    assert bad["status"] == "error" and "m_bNoSuchThing" in bad["message"]

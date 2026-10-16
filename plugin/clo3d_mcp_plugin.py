@@ -358,6 +358,26 @@ def handle_import_file(params):
     return {"imported": result, "file_path": file_path}
 
 
+DXF_DEFAULTS = {"m_bAppend": True, "m_bIncludeNotchs": True, "m_bImportPatternAnnotation": True}
+
+
+def handle_import_dxf(params):
+    """Import a DXF(-AAMA) pattern through CLO's own DXF importer with its option record. CLO's defaults leave
+    append OFF (the import replaces the open patterns) and notches OFF; a block is opened to design from, so this
+    appends and keeps notches unless the caller says otherwise. Option names are ApiTypes.ImportDxfOption's own,
+    read from CLO3D 2024.1 on 2026-10-16."""
+    import ApiTypes
+    file_path = params["file_path"]
+    opt = ApiTypes.ImportDxfOption()
+    for k, v in {**DXF_DEFAULTS, **(params.get("options") or {})}.items():
+        if not hasattr(opt, k):
+            raise ValueError("ImportDxfOption has no field " + k)
+        setattr(opt, k, v)
+    ok = bool(import_api.ImportDXF(file_path, opt))
+    return {"imported": ok, "file_path": file_path, "route": "ImportDXF",
+            "options": {k: getattr(opt, k) for k in dir(opt) if k.startswith("m_")}}
+
+
 def handle_import_avatar(params):
     file_path = params["file_path"]
     apf_path = params.get("apf_path", "")
@@ -513,6 +533,7 @@ HANDLERS = {
     "export_turntable": handle_export_turntable,
     "export_tech_pack": handle_export_tech_pack,
     "import_file": handle_import_file,
+    "import_dxf": handle_import_dxf,
     "import_avatar": handle_import_avatar,
     "import_fabric": handle_import_fabric,
     "simulate": handle_simulate,

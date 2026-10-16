@@ -369,6 +369,18 @@ def import_file(file_path: str) -> dict:
     return _send("import_file", {"file_path": file_path})
 
 
+@mcp.tool()
+def import_dxf(file_path: str, options: dict | None = None) -> dict:
+    """Import a DXF or DXF-AAMA pattern through CLO3D's DXF importer. Appends to the open project and keeps notches
+    by default; options takes ImportDxfOption fields by name (m_bAppend, m_Scale, m_bConvertToSeamAllowance, ...).
+
+    Args:
+        file_path: Absolute path to the .dxf file.
+        options: Optional ImportDxfOption overrides.
+    """
+    return _send("import_dxf", {"file_path": file_path, "options": options or {}})
+
+
 # ─── Simulation Tools ─────────────────────────────────────────────────────
 
 
