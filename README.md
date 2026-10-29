@@ -15,13 +15,13 @@ Your AI assistant  <-->  MCP Server  <-->  CLO3D Plugin  <-->  CLO3D
 One Python file, no dependencies.
 
 1. Open CLO3D
-2. **Script > Script Editor**
+2. **Script > Script Editor** (in CLO3D 2026.1: **Edit > Python Script**)
 3. Open `plugin/clo3d_mcp_plugin.py`
 4. Hit **Run**
 
 You'll see `[CLO MCP] Plugin started` and `[CLO MCP] Listening for commands in: ...` in the console.
 
-Run it once per CLO3D session. On Windows the plugin listens through a native timer driven by CLO3D's own event loop, so CLO3D stays fully usable. On other platforms it falls back to a blocking loop: the Script Editor stays busy while the plugin listens. Re-running the script replaces the previous listener.
+Run it once per CLO3D session. On Windows the plugin listens through a native timer driven by CLO3D's own event loop, so CLO3D stays fully usable. On macOS it does the same through a CoreFoundation run-loop timer on CLO3D's main thread. Elsewhere it falls back to a blocking loop: the Script Editor stays busy while the plugin listens. Re-running the script replaces the previous listener. The Script Editor runs the text it has loaded, so after updating the plugin file, open it again before hitting Run.
 
 ### 2. Connect your AI client
 

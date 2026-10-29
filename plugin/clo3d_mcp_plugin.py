@@ -641,8 +641,9 @@ def process_command(data):
 # Script Editor run returns, so a threading.Thread poller never runs (seen on
 # macOS and on Windows). On Windows, a native Win32 timer is dispatched by
 # CLO3D's own UI event loop on the main thread: each tick handles at most one
-# request and returns, so CLO3D stays responsive. On other platforms, fall
-# back to a blocking loop (the Script Editor stays busy while listening).
+# request and returns, so CLO3D stays responsive. On macOS a CFRunLoopTimer on
+# the main run loop does the same. Elsewhere, fall back to a blocking loop (the
+# Script Editor stays busy while listening).
 # State lives in `builtins` so that re-running the script replaces the
 # previous listener and the timer callback is never garbage-collected.
 # ---------------------------------------------------------------------------
@@ -662,10 +663,15 @@ def _import_ctypes():
         pass
     roots = [os.path.dirname(sys.executable)]
     roots += [os.path.dirname(p) for p in sys.path if p.lower().endswith(".zip")]
+    # macOS: CLO.app/Contents/Frameworks/python311/lib-dynload holds _ctypes.cpython-311-darwin.so (CLO3D 2026.1)
+    import glob
+    roots += sorted(glob.glob(os.path.join(os.path.dirname(sys.executable), "..", "Frameworks", "python3*")))
     for root in roots:
-        for sub in ("PythonLib", "DLLs", ""):
+        for sub in ("PythonLib", "DLLs", "lib-dynload", ""):
             folder = os.path.join(root, sub) if sub else root
-            if os.path.isfile(os.path.join(folder, "_ctypes.pyd")) and folder not in sys.path:
+            has_ctypes = os.path.isdir(folder) and any(
+                n.startswith("_ctypes.") and n.endswith((".pyd", ".so")) for n in os.listdir(folder))
+            if has_ctypes and folder not in sys.path:
                 sys.path.append(folder)
                 try:
                     import ctypes  # noqa: F811
@@ -690,6 +696,26 @@ if _HAVE_TIMER:
     _user32.SetTimer.restype = ctypes.c_size_t
     _user32.KillTimer.argtypes = [_wt.HWND, ctypes.c_size_t]
     _user32.KillTimer.restype = _wt.BOOL
+
+# macOS: a CFRunLoopTimer on the main run loop. Qt's Cocoa event loop runs that run loop, so CLO3D fires the
+# callback on its own main thread between events, the same way the Win32 timer works on Windows.
+_HAVE_CF_TIMER = False
+if sys.platform == "darwin":
+    ctypes = _import_ctypes()
+    _HAVE_CF_TIMER = ctypes is not None
+
+if _HAVE_CF_TIMER:
+    _cf = ctypes.CDLL("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")
+    _CFTIMERCALLBACK = ctypes.CFUNCTYPE(None, ctypes.c_void_p, ctypes.c_void_p)
+    _cf.CFAbsoluteTimeGetCurrent.restype = ctypes.c_double
+    _cf.CFRunLoopGetMain.restype = ctypes.c_void_p
+    _cf.CFRunLoopTimerCreate.argtypes = [ctypes.c_void_p, ctypes.c_double, ctypes.c_double, ctypes.c_ulong,
+                                         ctypes.c_long, _CFTIMERCALLBACK, ctypes.c_void_p]
+    _cf.CFRunLoopTimerCreate.restype = ctypes.c_void_p
+    _cf.CFRunLoopAddTimer.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+    _cf.CFRunLoopTimerInvalidate.argtypes = [ctypes.c_void_p]
+    _cf.CFRelease.argtypes = [ctypes.c_void_p]
+    _kCFRunLoopCommonModes = ctypes.c_void_p.in_dll(_cf, "kCFRunLoopCommonModes")
 
 
 def _handle_one_request():
@@ -752,6 +778,10 @@ def _tick(hwnd, msg, timer_id, time_ms):
             pass
 
 
+def _cf_tick(timer, info):
+    _tick(None, 0, 0, 0)
+
+
 def _prepare_comm_dir():
     if not os.path.exists(COMM_DIR):
         os.makedirs(COMM_DIR)
@@ -763,10 +793,21 @@ def _prepare_comm_dir():
                 pass
 
 
+def _note_listener(kind):
+    """Record which listener started, so it can be checked from outside while CLO3D's console cannot redraw."""
+    try:
+        with open(os.path.join(COMM_DIR, "listener.txt"), "w") as f:
+            f.write("%s\npython %s\nexecutable %s\n" % (kind, sys.version.split()[0], sys.executable))
+    except OSError:
+        pass
+
+
 def start():
     """Start listening. Re-running the script replaces the previous listener."""
     stop(quiet=True)
     _prepare_comm_dir()
+    # keep the previous listener's callback alive: freeing a ctypes thunk the OS may still call crashes CLO3D
+    builtins._clo3d_mcp_retired = (getattr(builtins, "_clo3d_mcp_retired", []) + [getattr(builtins, "_clo3d_mcp", None)])[-8:]
     builtins._clo3d_mcp = {"timer_id": None, "callback": None, "busy": False, "stop": False}
     state = builtins._clo3d_mcp
 
@@ -795,6 +836,21 @@ def start():
             return
         print("[CLO MCP] Could not create a Windows timer, falling back to a blocking loop.")
 
+    if _HAVE_CF_TIMER:
+        callback = _CFTIMERCALLBACK(_cf_tick)
+        timer = _cf.CFRunLoopTimerCreate(None, _cf.CFAbsoluteTimeGetCurrent() + POLL_INTERVAL, POLL_INTERVAL,
+                                         0, 0, callback, None)
+        if timer:
+            _cf.CFRunLoopAddTimer(_cf.CFRunLoopGetMain(), timer, _kCFRunLoopCommonModes)
+            state["cf_timer"], state["callback"] = timer, callback
+            _note_listener("cf_timer")
+            print("[CLO MCP] Plugin started")
+            print("[CLO MCP] Listening for commands in: " + COMM_DIR)
+            print("[CLO MCP] CLO3D stays usable while listening.")
+            return
+        print("[CLO MCP] Could not create a run-loop timer, falling back to a blocking loop.")
+
+    _note_listener("blocking (cf_timer available: %s)" % _HAVE_CF_TIMER)
     print("[CLO MCP] Plugin started (the Script Editor stays busy while listening)")
     print("[CLO MCP] Listening for commands in: " + COMM_DIR)
     while not state["stop"]:
@@ -816,6 +872,13 @@ def stop(quiet=False):
     if timer_id and _HAVE_TIMER:
         _user32.KillTimer(None, timer_id)
         state["timer_id"] = state["id"] = None
+        if not quiet:
+            print("[CLO MCP] Plugin stopped")
+    cf_timer = state.get("cf_timer")
+    if cf_timer and _HAVE_CF_TIMER:
+        _cf.CFRunLoopTimerInvalidate(cf_timer)
+        _cf.CFRelease(cf_timer)
+        state["cf_timer"] = None
         if not quiet:
             print("[CLO MCP] Plugin stopped")
 
