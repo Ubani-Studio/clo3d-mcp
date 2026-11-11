@@ -25,6 +25,17 @@ Run it once per CLO3D session. On Windows the plugin listens through a native ti
 
 ### 2. Connect your AI client
 
+**Automatic client configuration** (requires Node.js 18+ and `uv`):
+
+```bash
+npx -y agent-add --global --mcp '{"clo3d":{"command":"uvx","args":["--from","git+https://github.com/Ubani-Studio/clo3d-mcp","clo3d-mcp"]}}'
+```
+
+Select your client in [Agent Add](https://github.com/pea3nut/agent-add), for example Claude Code, Claude Desktop, Cursor, or Codex. It writes the user-level MCP configuration; restart your client afterward. The CLO3D plugin from step 1 must still be running.
+
+<details>
+<summary>Manual configuration: Claude Code / Claude Desktop</summary>
+
 **Claude Code:**
 ```bash
 claude mcp add clo3d -- uvx --from git+https://github.com/Ubani-Studio/clo3d-mcp clo3d-mcp
@@ -41,6 +52,8 @@ claude mcp add clo3d -- uvx --from git+https://github.com/Ubani-Studio/clo3d-mcp
   }
 }
 ```
+
+</details>
 
 ### 3. Go
 
