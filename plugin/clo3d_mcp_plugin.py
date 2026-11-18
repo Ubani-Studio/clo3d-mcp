@@ -491,6 +491,90 @@ def handle_get_avatar_genders(params):
 # Handler registry
 # ---------------------------------------------------------------------------
 
+# -- Any public CLO3D API function --
+# The tools above cover the common operations. call_clo_api reaches the rest (several hundred functions:
+# arrangement, seams, elastic, graphics, animation...) without a new tool for each. Only the five CLO3D API
+# modules and their public functions are reachable: no other module, no name starting with "_".
+
+_API_MODULES = ("export_api", "fabric_api", "import_api", "pattern_api", "utility_api")
+
+
+def _jsonable(value, depth=0):
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if depth > 8:
+        return repr(value)
+    if isinstance(value, dict):
+        return {str(k): _jsonable(v, depth + 1) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_jsonable(v, depth + 1) for v in value]
+    return repr(value)
+
+
+def _api_module(name):
+    if name not in _API_MODULES:
+        raise ValueError("module must be one of: " + ", ".join(_API_MODULES))
+    module = globals().get(name)
+    if module is None:
+        raise RuntimeError(name + " is not loaded (is this running inside CLO3D?)")
+    return module
+
+
+def _api_option(value):
+    """{"__type__": "ImportExportOption", "fields": {...}} -> that ApiTypes option object with the fields set.
+    Only public ApiTypes classes (or export_api's, where CLO3D also exposes ImportExportOption), and only fields
+    the object already has: an unknown field is refused, not silently ignored."""
+    import ApiTypes
+    type_name = str(value["__type__"])
+    if type_name.startswith("_"):
+        raise ValueError("private names cannot be built")
+    cls = getattr(ApiTypes, type_name, None) or getattr(_api_module("export_api"), type_name, None)
+    if not isinstance(cls, type):
+        raise ValueError("ApiTypes has no type " + type_name)
+    obj = cls()
+    for key, val in (value.get("fields") or {}).items():
+        if key.startswith("_") or not hasattr(obj, key):
+            raise ValueError(type_name + " has no field " + key)
+        setattr(obj, key, val)
+    return obj
+
+
+def handle_api_call(params):
+    """Call one public function of a CLO3D API module with positional arguments."""
+    module_name = params["module"]
+    function_name = params["function"]
+    if function_name.startswith("_"):
+        raise ValueError("private names cannot be called")
+    function = getattr(_api_module(module_name), function_name, None)
+    if not callable(function):
+        raise ValueError(module_name + " has no function " + function_name)
+    args = list(params.get("args") or [])
+    # [[x, y, type], ...] -> [(float, float, int), ...] for vector<tuple<float,float,int>> parameters
+    for i in params.get("point_list_args") or []:
+        args[i] = [(float(p[0]), float(p[1]), int(p[2]) if len(p) > 2 else 0) for p in args[i]]
+    args = [_api_option(a) if isinstance(a, dict) and "__type__" in a else a for a in args]
+    result = function(*args)
+    return {"module": module_name, "function": function_name, "result": _jsonable(result)}
+
+
+def handle_api_list(params):
+    """List a CLO3D API module's public functions, optionally filtered, with their signatures (docs=True)."""
+    module_name = params["module"]
+    module = _api_module(module_name)
+    needle = (params.get("filter") or "").lower()
+    full = bool(params.get("docs"))
+    functions = []
+    for name in sorted(dir(module)):
+        if name.startswith("_") or needle not in name.lower():
+            continue
+        member = getattr(module, name)
+        if not callable(member):
+            continue
+        doc = (getattr(member, "__doc__", "") or "").strip()
+        functions.append({"name": name, "doc": doc[:1500] if full else (doc.splitlines()[0][:200] if doc else "")})
+    return {"module": module_name, "count": len(functions), "functions": functions}
+
+
 def handle_stop(params):
     state = getattr(builtins, "_clo3d_mcp", None)
     if state:
@@ -546,6 +630,8 @@ HANDLERS = {
     "get_avatars": handle_get_avatars,
     "show_hide_avatar": handle_show_hide_avatar,
     "get_avatar_genders": handle_get_avatar_genders,
+    "api_call": handle_api_call,
+    "api_list": handle_api_list,
 }
 
 

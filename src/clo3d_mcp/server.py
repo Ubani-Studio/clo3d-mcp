@@ -519,6 +519,42 @@ def set_simulation_quality(quality: int, simulation_mode: int = 0) -> dict:
                  {"quality": quality, "simulation_mode": simulation_mode})
 
 
+# ─── Any CLO API Function ──────────────────────────────────────────────────
+
+
+@mcp.tool()
+def call_clo_api(module: str, function: str, args: list | None = None,
+                 point_list_args: list[int] | None = None) -> dict:
+    """Call any public function of CLO3D's Python API, for what the other tools do not cover
+    (arrangement, seams, elastic, graphics, animation, rendering...).
+
+    Args:
+        module: export_api, fabric_api, import_api, pattern_api or utility_api.
+        function: the function name, e.g. "SetArrangement" or "AddSeamlinePairGroup".
+        args: positional arguments, e.g. [0, 3]. An option object is a dict
+            {"__type__": "ImportExportOption", "fields": {"bExportAvatar": true}}: the plug-in builds that
+            ApiTypes class and sets the named fields (an unknown field is refused).
+        point_list_args: indexes of args that are point lists [[x, y, type], ...] to pass as
+            list[tuple[float, float, int]] (CreatePatternWithPoints, CreateInternalShapeWithPoints...).
+
+    Use list_clo_api to find functions and their signatures first.
+    """
+    return _send("api_call", {"module": module, "function": function, "args": args or [],
+                              "point_list_args": point_list_args or []})
+
+
+@mcp.tool()
+def list_clo_api(module: str, filter: str = "", docs: bool = False) -> dict:
+    """List the public functions of a CLO3D API module.
+
+    Args:
+        module: export_api, fabric_api, import_api, pattern_api or utility_api.
+        filter: case-insensitive substring of the function name, e.g. "Arrangement".
+        docs: True returns each function's signature(s) and documentation.
+    """
+    return _send("api_list", {"module": module, "filter": filter, "docs": docs})
+
+
 @mcp.tool()
 def list_extensions() -> dict:
     """List the extension files loaded from CLO3D_MCP_EXTENSIONS, the tools each added, and any that

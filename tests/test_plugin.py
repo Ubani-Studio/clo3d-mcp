@@ -186,3 +186,41 @@ def test_import_dxf_appends_keeps_notches_and_refuses_unknown_options():
     bad = json.loads(PLUGIN_MODULE.process_command(json.dumps(
         {"id": 2, "type": "import_dxf", "params": {"file_path": "C:/b.dxf", "options": {"m_bNoSuchThing": 1}}})))
     assert bad["status"] == "error" and "m_bNoSuchThing" in bad["message"]
+
+
+def test_api_call_reaches_public_functions_and_builds_option_objects():
+    FAKES["import_api"].calls.clear()
+    r = json.loads(PLUGIN_MODULE.process_command(json.dumps({"id": 1, "type": "api_call", "params": {
+        "module": "import_api", "function": "ImportDXF",
+        "args": ["C:/b.dxf", {"__type__": "ImportDxfOption", "fields": {"m_bAppend": True}}]}})))
+    assert r["status"] == "success", r
+    name, args, _ = FAKES["import_api"].calls[-1]
+    assert name == "ImportDXF" and args[0] == "C:/b.dxf" and args[1].m_bAppend is True
+
+
+def test_api_call_converts_point_lists_to_tuples():
+    FAKES["pattern_api"].calls.clear()
+    r = json.loads(PLUGIN_MODULE.process_command(json.dumps({"id": 1, "type": "api_call", "params": {
+        "module": "pattern_api", "function": "CreatePatternWithPoints",
+        "args": [[[0, 0, 0], [100, 0], [50, 80, 2]]], "point_list_args": [0]}})))
+    assert r["status"] == "success", r
+    assert FAKES["pattern_api"].calls[-1][1][0] == [(0.0, 0.0, 0), (100.0, 0.0, 0), (50.0, 80.0, 2)]
+
+
+@pytest.mark.parametrize("params, word", [
+    ({"module": "os", "function": "system", "args": ["dir"]}, "module must be one of"),
+    ({"module": "utility_api", "function": "_secret"}, "private"),
+    ({"module": "import_api", "function": "ImportDXF",
+      "args": ["C:/b.dxf", {"__type__": "ImportDxfOption", "fields": {"m_bNoSuchField": 1}}]}, "m_bNoSuchField"),
+    ({"module": "import_api", "function": "ImportDXF", "args": [{"__type__": "_Hidden"}]}, "private"),
+])
+def test_api_call_refuses_other_modules_private_names_and_unknown_fields(params, word):
+    r = json.loads(PLUGIN_MODULE.process_command(json.dumps({"id": 1, "type": "api_call", "params": params})))
+    assert r["status"] == "error" and word in r["message"], r
+
+
+def test_api_list_only_lists_the_clo_modules():
+    ok = json.loads(PLUGIN_MODULE.process_command(json.dumps({"id": 1, "type": "api_list", "params": {"module": "fabric_api"}})))
+    assert ok["status"] == "success" and ok["result"]["module"] == "fabric_api"
+    bad = json.loads(PLUGIN_MODULE.process_command(json.dumps({"id": 2, "type": "api_list", "params": {"module": "builtins"}})))
+    assert bad["status"] == "error"

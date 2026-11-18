@@ -50,7 +50,7 @@ Ask things like:
 - *"Run 100 steps of simulation then export as GLB"*
 - *"Export a turntable of all colorways"*
 
-## What you get (46 tools)
+## What you get (48 tools)
 
 ### Scene
 | Tool | What it does |
@@ -112,6 +112,12 @@ Ask things like:
 |------|-------------|
 | `get_colorways` | List all colorways |
 | `set_current_colorway` | Switch the active colorway |
+
+### Any CLO API function
+| Tool | What it does |
+|------|-------------|
+| `list_clo_api` | Find functions in CLO's five API modules, with their signatures |
+| `call_clo_api` | Call any public one, with option objects such as `ImportExportOption` |
 
 ## How it works
 
