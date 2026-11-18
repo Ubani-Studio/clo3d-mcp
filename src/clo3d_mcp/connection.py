@@ -16,7 +16,8 @@ import tempfile
 import time
 import uuid
 
-TIMEOUT = 180  # seconds: simulation/export can take minutes
+# seconds: simulation/export can take minutes; heavy garments or renders can take longer (CLO3D_MCP_TIMEOUT)
+TIMEOUT = float(os.environ.get("CLO3D_MCP_TIMEOUT") or 180)
 POLL_INTERVAL = 0.05  # seconds between file checks
 MAX_RETRIES = 3
 RETRY_DELAY = 1.0
@@ -24,6 +25,11 @@ RETRY_DELAY = 1.0
 
 class CLO3DConnectionError(Exception):
     pass
+
+
+class CLO3DBusyError(CLO3DConnectionError):
+    """CLO3D took the request but did not answer in time. Never resent: the command may still be
+    running (or waiting on a dialog), and sending it again would run it twice."""
 
 
 def _find_comm_dir():
@@ -124,6 +130,8 @@ class CLO3DConnection:
         for attempt in range(retries):
             try:
                 return self._do_send(request)
+            except CLO3DBusyError:
+                raise
             except CLO3DConnectionError:
                 if attempt < retries - 1:
                     time.sleep(RETRY_DELAY)
@@ -162,6 +170,15 @@ class CLO3DConnection:
         while True:
             elapsed = time.time() - start_time
             if elapsed > TIMEOUT:
+                # The plug-in deletes request.json when it picks a request up. If it is gone, CLO3D is
+                # working on it (a long simulation, or a dialog waiting for the user): resending would make
+                # it run again once CLO3D is free.
+                if not os.path.exists(self.request_file):
+                    raise CLO3DBusyError(
+                        "CLO3D took the command but has not finished after " + str(TIMEOUT) + "s. "
+                        "It may still be running or waiting on a dialog in CLO3D; it was not resent. "
+                        "Set CLO3D_MCP_TIMEOUT (seconds) to wait longer."
+                    )
                 raise CLO3DConnectionError(
                     "Timed out waiting for CLO3D response (" + str(TIMEOUT) + "s). "
                     "The operation may still be running in CLO3D."

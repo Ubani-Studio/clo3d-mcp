@@ -71,3 +71,42 @@ class TestCLO3DConnection:
         assert r1["pong"] is True
         assert r2["count"] == 5
         assert r3["clo_version"] == "7.0.0"
+
+
+def test_a_command_clo3d_took_is_never_resent(mock_server, monkeypatch):
+    """A slow command (long simulation, or a dialog waiting in CLO3D) outlives the timeout. The plug-in has
+    already taken request.json, so the client must report it as busy and NOT send it again: resent, it would run
+    two or three more times once CLO3D is free (seen with a slow import, 2026-11)."""
+    import time
+    from clo3d_mcp import connection
+    from clo3d_mcp.connection import CLO3DBusyError
+
+    runs = []
+
+    def slow(params):
+        runs.append(time.time())
+        time.sleep(1.0)
+        return {"done": True}
+
+    mock_server._handlers["slow"] = slow
+    monkeypatch.setattr(connection, "TIMEOUT", 0.3)
+    monkeypatch.setattr(connection, "RETRY_DELAY", 0.05)
+    conn = CLO3DConnection.__new__(CLO3DConnection)
+    conn.comm_dir, conn.request_file, conn.response_file = (
+        mock_server.comm_dir, mock_server.request_file, mock_server.response_file)
+    conn._initialized = True
+    with pytest.raises(CLO3DBusyError):
+        conn.send_command("slow")
+    time.sleep(1.5)     # let the mock plug-in run any resent copies
+    assert len(runs) == 1, f"the command ran {len(runs)} times"
+
+
+def test_timeout_can_be_raised_from_the_environment(monkeypatch):
+    import importlib
+    from clo3d_mcp import connection
+    monkeypatch.setenv("CLO3D_MCP_TIMEOUT", "900")
+    try:
+        assert importlib.reload(connection).TIMEOUT == 900
+    finally:
+        monkeypatch.delenv("CLO3D_MCP_TIMEOUT")
+        importlib.reload(connection)
