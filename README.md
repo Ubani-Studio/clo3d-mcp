@@ -119,6 +119,8 @@ Ask things like:
 | `list_clo_api` | Find functions in CLO's five API modules, with their signatures |
 | `call_clo_api` | Call any public one, with option objects such as `ImportExportOption` |
 
+Before going deep, read [CLO3D API gotchas](docs/clo-api-gotchas.md): what the API does that its documentation does not say.
+
 ## How it works
 
 Two pieces:
