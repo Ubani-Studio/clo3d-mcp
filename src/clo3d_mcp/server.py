@@ -170,7 +170,11 @@ def get_arrangement_list() -> dict:
 
 @mcp.tool()
 def get_fabric_list() -> dict:
-    """Get a list of all fabrics in the current project with their indices."""
+    """List all fabrics with their indices and names.
+
+    Match fabrics by name: CLO3D drops unused fabrics when a project is saved, so after a save and
+    reload the same fabric can have a different index.
+    """
     return _send("get_fabric_list")
 
 

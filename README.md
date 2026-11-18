@@ -78,7 +78,7 @@ Ask things like:
 ### Fabrics
 | Tool | What it does |
 |------|-------------|
-| `get_fabric_list` | All fabrics with indices |
+| `get_fabric_list` | All fabrics with indices and names |
 | `add_fabric` | Load a .zfab or .jfab |
 | `replace_fabric` | Swap an existing fabric |
 | `assign_fabric_to_pattern` | Put a fabric on a pattern piece |

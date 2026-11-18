@@ -40,6 +40,19 @@ def handle_ping(params):
     return reply
 
 
+def _output_path(path):
+    """A file CLO3D will write. CLO3D resolves a relative path against its own install folder, and with a
+    missing folder it writes nothing (OBJ, thumbnails) or stops on a modal error dialog (glTF textures), so the
+    path must be absolute and its folder is created first."""
+    if not os.path.isabs(path):
+        raise ValueError("file_path must be an absolute path (CLO3D resolves relative paths against its own "
+                         "install folder): " + str(path))
+    folder = os.path.dirname(path)
+    if folder and not os.path.isdir(folder):
+        os.makedirs(folder)
+    return path
+
+
 # -- Scene --
 
 def handle_get_project_info(params):
@@ -73,7 +86,7 @@ def handle_open_file(params):
 
 
 def handle_save_file(params):
-    file_path = params["file_path"]
+    file_path = _output_path(params["file_path"])
     result = export_api.ExportZPrj(file_path)
     return {"saved": bool(result), "file_path": result or file_path}
 
@@ -179,9 +192,12 @@ def handle_get_fabric_count(params):
 
 def handle_get_fabric_list(params):
     count = fabric_api.GetFabricCount(True)
+    # Names, not just indexes: CLO3D drops unused fabrics when a project is saved, so after a save and reload
+    # the same fabric can have another index. Match fabrics by name.
+    name_of = getattr(fabric_api, "GetFabricName", None)
     fabrics = []
     for i in range(count):
-        fabrics.append({"index": i})
+        fabrics.append({"index": i, "name": name_of(i) if name_of else None})
     return {"fabrics": fabrics, "count": count}
 
 
@@ -239,14 +255,10 @@ def handle_delete_fabric(params):
 # -- Export --
 
 def handle_export_obj(params):
-    file_path = params["file_path"]
+    file_path = _output_path(params["file_path"])
     options = params.get("options", {})
     if options:
-        opt = export_api.NewImportExportOption()
-        for key, val in options.items():
-            if hasattr(opt, key):
-                setattr(opt, key, val)
-        result = export_api.ExportOBJ(file_path, opt)
+        result = export_api.ExportOBJ(file_path, _build_export_option(options))
     else:
         result = export_api.ExportOBJ(file_path)
     # ExportOBJ returns list[str], not str
@@ -260,13 +272,27 @@ def handle_export_obj(params):
 
 
 def handle_export_fbx(params):
-    file_path = params["file_path"]
+    file_path = _output_path(params["file_path"])
     try:
-        options = export_api.ImportExportOption()
-        result = export_api.ExportFBX(file_path, options)
-    except (AttributeError, TypeError):
-        result = export_api.ExportFBX(file_path)
+        result = export_api.ExportFBX(file_path, _new_export_option())
+    except TypeError as e:
+        result = _older_overload(e, export_api.ExportFBX, file_path)
     return {"exported": bool(result), "file_path": result or file_path, "format": "fbx"}
+
+
+def _new_export_option():
+    """An ImportExportOption that CLO3D's export functions accept. On CLO3D 2025.2 they want ApiTypes'
+    class (Marvelous::ImportExportOption): one made from export_api's is refused with a TypeError."""
+    try:
+        import ApiTypes
+        cls = getattr(ApiTypes, "ImportExportOption", None)
+    except ImportError:
+        cls = None
+    if isinstance(cls, type):
+        return cls()
+    if hasattr(export_api, "ImportExportOption"):
+        return export_api.ImportExportOption()
+    return export_api.NewImportExportOption()
 
 
 def _build_export_option(options):
@@ -274,50 +300,68 @@ def _build_export_option(options):
 
     Unknown keys are ignored rather than silently changing behaviour.
     """
-    if hasattr(export_api, "ImportExportOption"):
-        opt = export_api.ImportExportOption()
-    else:
-        opt = export_api.NewImportExportOption()
+    opt = _new_export_option()
     for key, val in (options or {}).items():
         if hasattr(opt, key):
             setattr(opt, key, val)
     return opt
 
 
-def handle_export_glb(params):
-    file_path = params["file_path"]
+def _older_overload(error, function, file_path):
+    """Retry with the path-only overload some CLO3D versions have. If that one does not exist either (CLO3D
+    2025.2 has none), raise the ORIGINAL error: it names the real problem, the retry's would not."""
     try:
-        # was: a fresh ImportExportOption(), discarding params["options"]
+        return function(file_path)
+    except TypeError:
+        raise error
+
+
+def handle_export_glb(params):
+    file_path = _output_path(params["file_path"])
+    try:
         result = export_api.ExportGLB(file_path, _build_export_option(params.get("options")))
-    except (AttributeError, TypeError):
-        result = export_api.ExportGLB(file_path)
+    except TypeError as e:
+        result = _older_overload(e, export_api.ExportGLB, file_path)
     return {"exported": bool(result), "file_path": result or file_path, "format": "glb"}
 
 
 def handle_export_gltf(params):
-    file_path = params["file_path"]
+    file_path = _output_path(params["file_path"])
     try:
         result = export_api.ExportGLTF(
             file_path, _build_export_option(params.get("options")), False)
-    except (AttributeError, TypeError):
-        result = export_api.ExportGLTF(file_path)
+    except TypeError as e:
+        result = _older_overload(e, export_api.ExportGLTF, file_path)
     return {"exported": bool(result), "file_path": result or file_path, "format": "gltf"}
 
 
+def _clear_selection():
+    """Deselect every pattern piece: CLO3D draws the selection highlight into thumbnails and snapshots."""
+    get_selected = getattr(pattern_api, "GetSelectedPattern", None)
+    select = getattr(pattern_api, "SelectPatternViaName", None)
+    if get_selected and select:
+        names = get_selected()
+        if isinstance(names, (list, tuple)):
+            for name in names:
+                select(name, False)
+
+
 def handle_export_thumbnail(params):
-    file_path = params["file_path"]
+    file_path = _output_path(params["file_path"])
+    _clear_selection()
     result = export_api.ExportThumbnail3D(file_path)
     return {"exported": bool(result), "file_path": result or file_path}
 
 
 def handle_export_snapshot(params):
-    file_path = params["file_path"]
+    file_path = _output_path(params["file_path"])
+    _clear_selection()
     result = export_api.ExportSnapshot3D(file_path)
     return {"exported": bool(result), "file_path": result or file_path}
 
 
 def handle_export_turntable(params):
-    file_path = params["file_path"]
+    file_path = _output_path(params["file_path"])
     num_images = params.get("number_of_images", 36)
     width = params.get("width", 2500)
     height = params.get("height", 2500)
@@ -327,7 +371,7 @@ def handle_export_turntable(params):
 
 
 def handle_export_tech_pack(params):
-    file_path = params["file_path"]
+    file_path = _output_path(params["file_path"])
     # CLO3D 2024.1 declares ExportTechPack(path, ExportTechpackOption) but exposes no ExportTechpackOption to
     # Python, so that call cannot be made (seen live 2026-10-15). ExportTechPackToStream returns the same tech
     # pack as JSON, and we write it. The file's existence is checked, never assumed.
