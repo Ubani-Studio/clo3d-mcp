@@ -53,7 +53,7 @@ def save_project(file_path: str) -> dict:
     Args:
         file_path: Absolute path for the saved .zprj file.
     """
-    return _send("save_file", {"file_path": file_path})
+    return _send("save_project", {"file_path": file_path})
 
 
 @mcp.tool()
@@ -94,7 +94,7 @@ def get_pattern_bounding_box(pattern_index: int) -> dict:
     Args:
         pattern_index: Zero-based index of the pattern piece.
     """
-    return _send("get_bounding_box", {"pattern_index": pattern_index})
+    return _send("get_pattern_bounding_box", {"pattern_index": pattern_index})
 
 
 @mcp.tool()
@@ -207,7 +207,7 @@ def assign_fabric_to_pattern(
         assign_option: 1=current colorway only, 2=all colorways (unlinked), 3=all colorways (linked).
     """
     return _send(
-        "assign_fabric",
+        "assign_fabric_to_pattern",
         {
             "fabric_index": fabric_index,
             "pattern_index": pattern_index,
@@ -542,3 +542,7 @@ def ping() -> dict:
 from clo3d_mcp.extensions import load_extensions  # noqa: E402
 
 EXTENSIONS = load_extensions(mcp, _send)
+
+
+# Extended tools (one module per domain); imported last so they register on this server.
+import clo3d_mcp.extended  # noqa: E402,F401

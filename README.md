@@ -50,7 +50,9 @@ Ask things like:
 - *"Run 100 steps of simulation then export as GLB"*
 - *"Export a turntable of all colorways"*
 
-## What you get (46 tools)
+## What you get (175 tools)
+
+The 46 tools below cover the scene, patterns, fabrics, export, import, simulation and colorways. The 128 extended tools that follow them (one typed plug-in command each, no generic call) cover seams, internal lines, arrangement on the avatar, piece states, mesh, fabrics and textures, graphics, trims, buttons, zippers, avatars and poses, grading, garment information, bill of materials, views, fit maps, technical drawings, nesting, the CLO API documentation, and a whole garment built in one call. Every tool is listed in [docs/TOOLS.md](docs/TOOLS.md).
 
 ### Scene
 | Tool | What it does |
@@ -112,6 +114,28 @@ Ask things like:
 |------|-------------|
 | `get_colorways` | List all colorways |
 | `set_current_colorway` | Switch the active colorway |
+
+### Extended tools (128)
+
+| Area | Tools | Examples |
+|------|-------|----------|
+| Geometry | 24 | `sew_lines`, `create_internal_shape`, `get_line_lengths`, `unfold_pattern`, `symmetry_pattern`, `instance_pattern`, annotations, `get_scene_summary` (the whole scene in one call) |
+| Sewing | 14 | topstitches and their styles, seam tape, shirring, elastic, seam groups |
+| Simulation | 14 | `arrange_pattern` on the avatar's arrangement points, layers, freeze and lock, collision thickness, mesh size, shrinkage, advanced settings |
+| Materials | 36 | fabric textures and PBR settings, fabric duplication (sewn patches), graphics, trims, buttons, zippers |
+| Avatar | 12 | avatar properties and softness, measurements CSV, poses, CLO's own grading sizes |
+| Files | 10 | `build_garment` (a garment JSON built in one call: pieces, seams, fabrics by role, placement by point name), pattern JSON, garment information, bill of materials, CLO asset library |
+| Visuals | 10 | camera, view images, 2D pattern snapshot, stress and strain maps, technical drawing, colorway images |
+| Nesting | 4 | automatic layout on the fabric width |
+| Docs | 3 | list and describe the CLO Python API, read-only |
+
+Plug-in command names are the MCP tool names. The former names of six commands (`sew`, `save_file`, `get_bounding_box`, `assign_fabric`, `list_api`, `api_doc`) still work as aliases, so extensions written against them keep running.
+
+Known limits of the CLO3D Python API (2025.2): option classes (`ImportExportOption`, `ImportZPRJOption`, `CloApiRgb`) are not exposed, so opening a project without a dialog, measurements with a given avatar and colorway colours are out of reach; `import_pattern_json` replaces the whole scene; a placed graphic cannot be moved or deleted (use a sewn patch: `duplicate_fabric`, `set_fabric_maps`, `create_internal_shape`, `sew_lines` with `child_b`).
+
+## Pattern making
+
+[pattern-making-skill](https://github.com/adriendelmas/pattern-making-skill) is an agent skill that drafts garment patterns from body measurements, photos or sketches (blocks, dart manipulation, whole jackets and coats from a JSON spec, grading, SVG and DXF) and writes a garment file for this server. `build_garment` builds that file in CLO3D in one call: pieces with exact Bezier edges, seams by node name, fabric by role, mesh size per piece, arrangement by point name, wrap holds. The skill then checks the line lengths, captures the views, simulates and reads the fit maps through the other tools.
 
 ## How it works
 
@@ -187,7 +211,8 @@ cd clo3d-mcp
 # Install dev dependencies
 uv sync --dev
 
-# Run tests (no CLO3D needed, uses a mock server)
+# Run tests (no CLO3D needed, uses a mock server; every plug-in handler runs against a fake CLO3D API,
+# and tests/test_static.py holds every MCP tool to the plug-in command of its own name)
 uv run pytest tests/ -v
 
 # Run the MCP server locally
