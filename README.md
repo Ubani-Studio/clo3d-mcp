@@ -21,7 +21,7 @@ One Python file, no dependencies.
 
 You'll see `[CLO MCP] Plugin started` and `[CLO MCP] Listening for commands in: ...` in the console.
 
-Run it once per CLO3D session. On Windows the plugin listens through a native timer driven by CLO3D's own event loop, so CLO3D stays fully usable. On other platforms it falls back to a blocking loop: the Script Editor stays busy while the plugin listens. Re-running the script replaces the previous listener.
+Run it once per CLO3D session. On Windows the plugin listens through a native timer driven by CLO3D's own event loop, so CLO3D stays fully usable. The timer is on by default from CLO3D 2025.2, the first build it was verified on; on older builds it is off, because CLO3D 2024.1 never fires it and crashed. `CLO3D_MCP_TIMER=1` forces it on and `CLO3D_MCP_TIMER=0` off, set in CLO3D's environment before it starts. On other platforms it falls back to a blocking loop: the Script Editor stays busy while the plugin listens. Re-running the script replaces the previous listener.
 
 ### 2. Connect your AI client
 
