@@ -59,8 +59,15 @@ class FakeDxfOption:
         self.m_bIncludeNotchs, self.m_bImportPatternAnnotation, self.m_bConvertToSeamAllowance = False, True, False
 
 
+class FakeExportOption:
+    """The ApiTypes.ImportExportOption that CLO3D 2025.2's exporters require (a few of its fields)."""
+    def __init__(self):
+        self.bExportAvatar, self.bExportGarment, self.scale = False, True, 1.0
+
+
 class FakeTypes(types.ModuleType):
     ImportDxfOption = FakeDxfOption
+    ImportExportOption = FakeExportOption
 
 
 def load_plugin(dev=False):
@@ -186,3 +193,93 @@ def test_import_dxf_appends_keeps_notches_and_refuses_unknown_options():
     bad = json.loads(PLUGIN_MODULE.process_command(json.dumps(
         {"id": 2, "type": "import_dxf", "params": {"file_path": "C:/b.dxf", "options": {"m_bNoSuchThing": 1}}})))
     assert bad["status"] == "error" and "m_bNoSuchThing" in bad["message"]
+
+
+def test_api_call_reaches_public_functions_and_builds_option_objects():
+    FAKES["import_api"].calls.clear()
+    r = json.loads(PLUGIN_MODULE.process_command(json.dumps({"id": 1, "type": "api_call", "params": {
+        "module": "import_api", "function": "ImportDXF",
+        "args": ["C:/b.dxf", {"__type__": "ImportDxfOption", "fields": {"m_bAppend": True}}]}})))
+    assert r["status"] == "success", r
+    name, args, _ = FAKES["import_api"].calls[-1]
+    assert name == "ImportDXF" and args[0] == "C:/b.dxf" and args[1].m_bAppend is True
+
+
+def test_api_call_converts_point_lists_to_tuples():
+    FAKES["pattern_api"].calls.clear()
+    r = json.loads(PLUGIN_MODULE.process_command(json.dumps({"id": 1, "type": "api_call", "params": {
+        "module": "pattern_api", "function": "CreatePatternWithPoints",
+        "args": [[[0, 0, 0], [100, 0], [50, 80, 2]]], "point_list_args": [0]}})))
+    assert r["status"] == "success", r
+    assert FAKES["pattern_api"].calls[-1][1][0] == [(0.0, 0.0, 0), (100.0, 0.0, 0), (50.0, 80.0, 2)]
+
+
+@pytest.mark.parametrize("params, word", [
+    ({"module": "os", "function": "system", "args": ["dir"]}, "module must be one of"),
+    ({"module": "utility_api", "function": "_secret"}, "private"),
+    ({"module": "import_api", "function": "ImportDXF",
+      "args": ["C:/b.dxf", {"__type__": "ImportDxfOption", "fields": {"m_bNoSuchField": 1}}]}, "m_bNoSuchField"),
+    ({"module": "import_api", "function": "ImportDXF", "args": [{"__type__": "_Hidden"}]}, "private"),
+])
+def test_api_call_refuses_other_modules_private_names_and_unknown_fields(params, word):
+    r = json.loads(PLUGIN_MODULE.process_command(json.dumps({"id": 1, "type": "api_call", "params": params})))
+    assert r["status"] == "error" and word in r["message"], r
+
+
+def test_api_list_only_lists_the_clo_modules():
+    ok = json.loads(PLUGIN_MODULE.process_command(json.dumps({"id": 1, "type": "api_list", "params": {"module": "fabric_api"}})))
+    assert ok["status"] == "success" and ok["result"]["module"] == "fabric_api"
+    bad = json.loads(PLUGIN_MODULE.process_command(json.dumps({"id": 2, "type": "api_list", "params": {"module": "builtins"}})))
+    assert bad["status"] == "error"
+
+
+def _run(command, **params):
+    return json.loads(PLUGIN_MODULE.process_command(json.dumps({"id": 1, "type": command, "params": params})))
+
+
+@pytest.mark.parametrize("command", ["save_file", "export_obj", "export_fbx", "export_glb", "export_gltf",
+                                     "export_thumbnail", "export_snapshot", "export_turntable", "export_tech_pack"])
+def test_outputs_need_an_absolute_path(command):
+    r = _run(command, file_path="renders/look.png")
+    assert r["status"] == "error" and "absolute" in r["message"], r
+
+
+def test_outputs_create_their_folder(tmp_path):
+    target = tmp_path / "not" / "there" / "front.png"
+    r = _run("export_thumbnail", file_path=str(target))
+    assert r["status"] == "success", r
+    assert target.parent.is_dir()
+
+
+def test_gltf_and_glb_pass_the_apitypes_option_and_the_requested_fields(tmp_path):
+    FAKES["export_api"].calls.clear()
+    assert _run("export_gltf", file_path=str(tmp_path / "a.gltf"), options={"bExportAvatar": True})["status"] == "success"
+    assert _run("export_glb", file_path=str(tmp_path / "a.glb"))["status"] == "success"
+    gltf = [c for c in FAKES["export_api"].calls if c[0] == "ExportGLTF"][-1]
+    glb = [c for c in FAKES["export_api"].calls if c[0] == "ExportGLB"][-1]
+    assert isinstance(gltf[1][1], FakeExportOption) and gltf[1][1].bExportAvatar is True and gltf[1][2] is False
+    assert isinstance(glb[1][1], FakeExportOption)
+
+
+def test_a_refused_export_reports_the_real_error_not_the_fallbacks(tmp_path, monkeypatch):
+    """CLO3D 2025.2 has no path-only ExportGLTF: the old fallback hid the real TypeError behind its own."""
+    def strict(path, *rest):
+        if not rest:
+            raise TypeError("fallback: path-only overload does not exist")
+        raise TypeError("real: incompatible option object")
+    monkeypatch.setattr(FAKES["export_api"], "ExportGLTF", strict, raising=False)
+    r = _run("export_gltf", file_path=str(tmp_path / "a.gltf"))
+    assert r["status"] == "error" and "real:" in r["message"], r
+
+
+def test_fabric_list_has_names():
+    r = _run("get_fabric_list")
+    assert r["status"] == "success" and all(f["name"] for f in r["result"]["fabrics"]), r
+
+
+def test_thumbnails_are_taken_with_nothing_selected(tmp_path, monkeypatch):
+    monkeypatch.setattr(FAKES["pattern_api"], "GetSelectedPattern", lambda: ["Front", "Back"], raising=False)
+    FAKES["pattern_api"].calls.clear()
+    assert _run("export_thumbnail", file_path=str(tmp_path / "t.png"))["status"] == "success"
+    deselected = [c[1] for c in FAKES["pattern_api"].calls if c[0] == "SelectPatternViaName"]
+    assert deselected == [("Front", False), ("Back", False)], deselected

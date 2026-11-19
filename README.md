@@ -50,7 +50,7 @@ Ask things like:
 - *"Run 100 steps of simulation then export as GLB"*
 - *"Export a turntable of all colorways"*
 
-## What you get (46 tools)
+## What you get (48 tools)
 
 ### Scene
 | Tool | What it does |
@@ -78,7 +78,7 @@ Ask things like:
 ### Fabrics
 | Tool | What it does |
 |------|-------------|
-| `get_fabric_list` | All fabrics with indices |
+| `get_fabric_list` | All fabrics with indices and names |
 | `add_fabric` | Load a .zfab or .jfab |
 | `replace_fabric` | Swap an existing fabric |
 | `assign_fabric_to_pattern` | Put a fabric on a pattern piece |
@@ -112,6 +112,14 @@ Ask things like:
 |------|-------------|
 | `get_colorways` | List all colorways |
 | `set_current_colorway` | Switch the active colorway |
+
+### Any CLO API function
+| Tool | What it does |
+|------|-------------|
+| `list_clo_api` | Find functions in CLO's five API modules, with their signatures |
+| `call_clo_api` | Call any public one, with option objects such as `ImportExportOption` |
+
+Before going deep, read [CLO3D API gotchas](docs/clo-api-gotchas.md): what the API does that its documentation does not say.
 
 ## How it works
 
@@ -151,6 +159,22 @@ claude mcp add clo3d -e CLO3D_MCP_EXTENSIONS=/path/to/my_tools -- uvx --from git
 ```
 
 Several folders or files are separated by `:` (`;` on Windows). Files starting with `_` are skipped, so helpers can sit beside the tools. `ext.send` uses the commands the plug-in already handles. A file that fails to load is named in the server's log and by the `list_extensions` tool, never skipped in silence, and an extension cannot replace a built-in tool.
+
+## Windows UI helpers
+
+Some CLO3D steps have no Python API: dialogs that open in the middle of an import (Open Motion), menu-only
+features (Avatar > Auto Convert to Motion), the Avatar Editor. The PowerShell scripts in `tools/` drive them
+through Windows UI Automation: no mouse, no focus change, so they work while other windows are in front.
+
+| Script | What it does |
+|--------|-------------|
+| `tools/clo_dialog.ps1` | Press a button in a CLO3D dialog, found by title (`-Title "Open Motion" -Button OK`) or by text inside it (`-Contains "Move Avatar"`); `-List` shows its buttons |
+| `tools/clo_ui.ps1` | Open a menu path and invoke the last item (`menu "Avatar>Auto Convert to Motion"`), press a dialog button, pick a combo item, fill a Windows file dialog, list a dialog's controls |
+| `tools/clo_uia.ps1` | Set Avatar Editor sizes |
+
+Start `clo_dialog.ps1` in the background before the call that opens the dialog: the CLO3D call does not return
+until the dialog closes. CLO3D's Open Motion dialog draws its own title bar, so find it with `-Contains`
+(its checkbox text), not `-Title`. Some Qt combo boxes do not commit a choice made through UI Automation.
 
 ## Troubleshooting
 
