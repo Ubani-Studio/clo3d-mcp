@@ -763,6 +763,32 @@ def _prepare_comm_dir():
                 pass
 
 
+TIMER_OK_FROM = (2025, 2)   # first build the timer listener was verified on: CLO3D 2025.2.236, Windows 11
+
+
+def _clo_version():
+    """(major, minor) of the running CLO3D, or None when the API does not say."""
+    try:
+        return int(utility_api.GetMajorVersion()), int(utility_api.GetMinorVersion())
+    except Exception:
+        return None
+
+
+def _clo_version_text():
+    v = _clo_version()
+    return ".".join(str(n) for n in v) if v else "(version not readable)"
+
+
+def _timer_enabled():
+    """CLO3D_MCP_TIMER=1 forces the timer listener on and =0 off. Left unset, it is on from TIMER_OK_FROM,
+    and off on older builds and when the version cannot be read (CLO 2024.1 never fires it and crashed)."""
+    flag = (os.environ.get("CLO3D_MCP_TIMER") or "").strip().lower()
+    if flag:
+        return flag not in ("0", "false", "no", "off")
+    v = _clo_version()
+    return v is not None and v >= TIMER_OK_FROM
+
+
 def start():
     """Start listening. Re-running the script replaces the previous listener."""
     stop(quiet=True)
@@ -777,12 +803,13 @@ def start():
         print("[CLO MCP] Please report this at github.com/Ubani-Studio/clo3d-mcp/issues with your CLO3D version.")
         return
 
-    if sys.platform == "win32" and not os.environ.get("CLO3D_MCP_TIMER"):
+    if sys.platform == "win32" and not _timer_enabled():
         # 2026-10-18: in CLO 2024.1 a timer set from Python never fires its callback (probed on CLO's GUI thread,
         # thread and window timers, zero ticks), and CLO crashed three times (15, 16, 18 Oct) with BEX64 in
-        # Qt5Core.dll, the signature of a timer callback thunk freed while Windows still held the timer. Off by
-        # default; drive CLO with ala-clo-exec (the Python Editor) instead. CLO3D_MCP_TIMER=1 re-enables it.
-        print("[CLO MCP] Timer listener disabled in this build (see ala-clo-exec).")
+        # Qt5Core.dll, the signature of a timer callback thunk freed while Windows still held the timer. Off on
+        # builds older than TIMER_OK_FROM; drive CLO with ala-clo-exec (the Python Editor) instead.
+        print("[CLO MCP] Timer listener disabled on CLO3D " + _clo_version_text() + " (on by default from "
+              + ".".join(str(n) for n in TIMER_OK_FROM) + "; CLO3D_MCP_TIMER=1 forces it on; see ala-clo-exec).")
         return
     if sys.platform == "win32":
         callback = _TIMERPROC(_tick)
